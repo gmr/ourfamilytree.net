@@ -1,0 +1,692 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kent and Kint Records Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: surveyor's sheet — map with view + year controls on top, place register beside it; stacks on phones */
+:root{
+  --bg:#f8fafc; --paper:#ffffff; --ink:#0f172a; --muted:#64748b; --rule:#e2e8f0; --body-ink:#334155; --sub-ink:#475569;
+  --river:#4f7fa3; --ridge:#9a8a6e; --accent:#b91c1c; --accent-soft:#b91c1c22;
+  --c-land:#9b2d3c; --c-tax:#8a6a2f; --c-cen:#2a6fa8; --c-mil:#55782a; --c-court:#6b4a9a; --c-bmd:#1b857c; --c-misc:#66707a;
+  --tag:#3f6b5a; --twp:#8a6a2f; --ter-ink:#6f6048; --road:#8a7556; --bound:#8d8478; --jline:#a8481f;
+  --f-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --f-display:var(--f-sans); --f-body:var(--f-sans); --f-mono:var(--f-sans);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a18; --paper:#1b2320; --ink:#e4ebe7; --muted:#9aa8a1; --rule:#33403b;
+  --river:#6fa2c8; --ridge:#b3a283; --accent:#e06a78; --accent-soft:#e06a7826;
+  --c-land:#e06a78; --c-tax:#d0a85c; --c-cen:#6fb1e6; --c-mil:#a3c76a; --c-court:#b79bea; --c-bmd:#5fd0c4; --c-misc:#a9b2bb;
+  --tag:#7fbfa6; --twp:#d0a85c; --ter-ink:#c9b894; --road:#b9a27e; --bound:#8f8a80; --jline:#e8956a; --body-ink:#cbd5e1; --sub-ink:#a3b1c2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a18; --paper:#1b2320; --ink:#e4ebe7; --muted:#9aa8a1; --rule:#33403b;
+  --river:#6fa2c8; --ridge:#b3a283; --accent:#e06a78; --accent-soft:#e06a7826;
+  --c-land:#e06a78; --c-tax:#d0a85c; --c-cen:#6fb1e6; --c-mil:#a3c76a; --c-court:#b79bea; --c-bmd:#5fd0c4; --c-misc:#a9b2bb;
+  --tag:#7fbfa6; --twp:#d0a85c; --ter-ink:#c9b894; --road:#b9a27e; --bound:#8f8a80; --jline:#e8956a; --body-ink:#cbd5e1; --sub-ink:#a3b1c2; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header h1{font:700 clamp(26px,3.4vw,38px)/1.1 var(--f-display);margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:none}
+.eyebrow{font:500 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.sheet{background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:12px;min-width:0}
+svg{width:100%;height:auto;display:block}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:10px;font-size:13px}
+.seg{display:flex;gap:4px}
+.seg button,.chip{font:600 13px var(--f-body);border:1px solid var(--rule);background:transparent;color:var(--ink);padding:4px 11px;border-radius:99px;cursor:pointer}
+.seg button.addc{border-style:dashed;color:var(--muted)}#cbtns{flex-wrap:wrap;align-items:center;gap:8px 18px}.cmbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 4px;padding:10px 12px;background:color-mix(in srgb,var(--twp) 14%,var(--paper));border:1.5px solid color-mix(in srgb,var(--twp) 70%,var(--ink));border-left-width:5px;border-radius:8px;box-shadow:0 2px 8px #0002;font-size:13px}.cmbar[hidden]{display:none}.cmlab{display:inline-flex;align-items:center;gap:7px;font:700 13.5px var(--f-body);color:var(--ink);margin-right:4px}.cmlab::before{content:'';width:11px;height:11px;border-radius:2px;background:var(--ink);flex:none}
+.cmb{display:inline-flex;align-items:center;gap:7px;font:600 13.5px var(--f-body);border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);padding:4px 12px 4px 5px;border-radius:7px;cursor:pointer;box-shadow:0 1px 0 #0002;transition:background .12s,transform .12s,box-shadow .12s}.cmb:hover,.cmb:focus-visible{background:var(--ink);color:var(--paper);transform:translateY(-1px);box-shadow:0 3px 8px #0003}.cmb:hover i.tmk.sq,.cmb:focus-visible i.tmk.sq{background:var(--paper);color:var(--ink);border-color:var(--paper)}.cmb:active{transform:none}.cmb i.tmk.sq{min-width:24px;width:auto;padding:0 5px}.cmb::after{content:'›';font-weight:700;opacity:.6;margin-left:2px}
+#cbtns .nyt,#nybox .nyt{font:600 12.5px var(--f-body);border:1px dashed var(--rule);background:transparent;color:var(--muted);padding:3px 10px;border-radius:99px;cursor:pointer}.nyw{display:contents}.nyw[hidden]{display:none!important}#cbtns .nonec{font:500 12px var(--f-mono);color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+button:focus-visible,g.mk:focus-visible,.place:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.yr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.yr input[type=range]{width:110px;accent-color:var(--accent)}
+.yr output{font:500 12px var(--f-mono);min-width:3.2em}
+label.ck{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+details.legd{margin-top:8px;border:1px solid var(--rule);border-radius:6px;padding:6px 10px;background:var(--paper)}details.legd>summary{cursor:pointer;font:600 13px var(--f-body);color:var(--ink)}details.legd[open]>summary{margin-bottom:4px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.list{display:flex;flex-direction:column;gap:8px;max-height:820px;overflow:auto;padding-right:4px}
+.place{border:1px solid var(--rule);border-radius:4px;padding:9px 11px;background:var(--bg);cursor:pointer}
+.place.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.place h3{margin:0;font:600 15px/1.3 var(--f-body);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.place .n{font:500 12px var(--f-mono);color:var(--paper);border-radius:3px;padding:0 6px;flex:none}
+.place .basis{font:500 11px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.place .why{font-size:13px;color:var(--muted);margin:3px 0 0}
+table{border-collapse:collapse;width:100%;margin-top:6px;font-size:13px}
+td{padding:3px 6px 3px 0;vertical-align:top;border-top:1px solid var(--rule)}
+td.y{font:500 12px var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums;width:3.2em}
+td.b{font:400 12px var(--f-mono);white-space:nowrap;color:var(--muted)}
+td.a{font:400 12px var(--f-mono);white-space:nowrap;text-align:right}
+tr.v td{color:var(--muted);font-style:italic}
+h2{font:600 18px var(--f-display);margin:0 0 8px}
+.notes{font-size:13.5px;color:var(--muted);margin:0;padding-left:18px}
+.notes li{margin:4px 0}
+.placelabel{font:600 11.5px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}
+.yrlabel{font:500 10px var(--f-mono);fill:var(--muted);paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.rivlabel{font:italic 500 13px var(--f-display);fill:var(--river)}
+.ridgelabel{font:500 10px var(--f-mono);fill:var(--ridge);letter-spacing:.1em}
+.maplabel{font:500 11px var(--f-mono);fill:var(--muted)}
+.terbig{font:600 12px var(--f-mono);letter-spacing:.14em;fill:var(--ter-ink)}
+.tersub{font:italic 500 11px var(--f-display);fill:var(--ter-ink)}
+.terlabel{font:italic 500 11.5px var(--f-display);fill:var(--ter-ink)}
+.terbig,.tersub,.terlabel{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+#map.zlo .zsec{display:none}
+.ctx{font:italic 500 12px var(--f-display);fill:var(--muted)}
+.roadlabel{font:500 9.5px var(--f-mono);fill:var(--road);paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.twplabel{font:600 12px var(--f-mono);fill:var(--bound);letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.cntylabel{font:700 13px var(--f-mono);fill:var(--bound);letter-spacing:.2em;opacity:.6}
+.twplabel.wj,.cntylabel.wj{fill:var(--jline);opacity:1}.sw.wjs{border-top:0;height:10px;background:var(--jline);opacity:.3;border-radius:2px}
+.jlabel{font:600 11.5px var(--f-body);fill:var(--jline);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}.jside{font:italic 600 11px var(--f-display);fill:var(--jline);letter-spacing:.04em;opacity:.9;paint-order:stroke;stroke:var(--paper);stroke-width:3px}.sw.jl{border-top:3px solid var(--jline)}.sw.jld{border-top:3px dashed var(--jline)}
+.sw{display:inline-block;width:22px;height:0;border-top:2px dashed var(--road)}
+.sw.b{border-top:2px dotted var(--bound)}.sw.r{border-top:3px solid var(--river)}.sw.c{border-top:2px dotted var(--river)}
+g.mk{cursor:pointer}
+g.mk text.c{font:600 10.5px var(--f-mono);fill:var(--paper);pointer-events:none}
+g.mk.dim{opacity:.15}
+.empty{color:var(--muted);font-size:13px}
+.mapbox{position:relative}#zmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#000b;color:#fff;font:600 13px var(--f-body);padding:8px 14px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:3;text-align:center;max-width:80%}#zmsg.on{opacity:1}
+.zbar{position:sticky;top:8px;z-index:3;width:max-content;max-width:calc(100% - 16px);margin:8px 8px -44px auto;flex-wrap:wrap;justify-content:flex-end;user-select:none;-webkit-user-select:none;display:flex;gap:4px;align-items:center;background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:3px;z-index:2;box-shadow:0 1px 3px #0002}
+.zbar button{font:600 14px var(--f-body);min-width:30px;height:28px;border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer;padding:0 8px}
+.zbar button:disabled{opacity:.4;cursor:default}
+.zbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.zbar output{font:500 11px var(--f-mono);min-width:3.4em;text-align:center;color:var(--muted)}
+#map{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#map.grabbing{cursor:grabbing}
+#map:focus:not(:focus-visible){outline:none}
+#map.zoomed{touch-action:none}
+.grid.wide{grid-template-columns:1fr}
+.grid.noside > section:not(#mapsec){display:none}
+.tftop{margin:0 0 10px}.tftop select{flex:0 1 420px}
+.tfhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.zhint{font-size:12px;color:var(--muted);margin:4px 0 0}
+.ht{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+.ht th{font:500 11px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:3px 10px 3px 0}
+.ht td{padding:5px 10px 5px 0;border-top:1px solid var(--rule);vertical-align:top}
+.ht td:first-child{white-space:nowrap}.ht td.why2{white-space:normal}
+@media (max-width:700px){.ht td:first-child{white-space:normal}}
+
+
+
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filters button{font:600 13px var(--f-body);border:1px solid var(--rule);background:transparent;color:var(--ink);padding:4px 10px;border-radius:99px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--tag);border-color:var(--tag);color:var(--paper)}
+.key{font:500 12px var(--f-mono);color:var(--paper);border-radius:3px;padding:0 6px;flex:none}
+.place ul{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+.place li{margin:4px 0}
+.place div.basis{margin-top:2px}
+.src{font:400 12px/1.45 var(--f-mono);color:var(--muted);margin-top:6px;word-break:break-word}
+.hid{font-size:12px;color:var(--muted);margin-top:4px}
+[hidden]{display:none!important}
+.sec{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:8px 0 0}
+.sec:first-child{margin-top:0}
+g.mk text.k{font:600 11px var(--f-mono);fill:var(--paper);pointer-events:none}
+.lfz .lfzp{fill:var(--tag);fill-opacity:.16;stroke:var(--tag);stroke-width:1.6;stroke-dasharray:6 3}.lfz.wp .lfzp{fill-opacity:.08;stroke-dasharray:2 4}.lfzl{font-size:12px}
+.sw.lfs{border-top:0;height:10px;background:var(--tag);opacity:.35;border-radius:2px}
+.placelabel.dim{opacity:.15}
+.ctx{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+.rivlabel{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
+h3.sub{font:600 14px var(--f-body);margin:12px 0 4px}
+.notes a{color:var(--accent)}
+.lb-top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0 10px}
+.lb-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px 20px}
+.lb-cols.off{opacity:.45}
+.lb-cols.az{display:block}.lb-cols .az{grid-column:1/-1;columns:260px;column-gap:20px}.lb-cols .az label.lb{break-inside:avoid}
+.cty{color:var(--muted);font-size:12px}
+.arr{align-items:center;flex-wrap:wrap}.arrl{font:500 12px var(--f-mono);color:var(--muted);margin-right:2px}
+#twpsec .arr{margin:6px 0 4px}
+.lb-cols h4 label.ck{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
+.lb-cols h4{font:600 12px var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+label.lb{display:flex;gap:6px;align-items:baseline;font-size:13px;padding:1px 0;width:100%}
+.lbn{margin-left:auto;font:500 11px var(--f-mono);color:var(--muted);text-decoration:none}
+.lbn:hover{color:var(--accent)}
+#twplist details,#yrlist details{border-top:1px solid var(--rule);padding:6px 0}
+details.shblk{background:var(--accent-soft);border-left:3px solid var(--accent);padding:6px 8px!important;margin:4px 0}
+.shap{font:500 12px var(--f-body);color:var(--muted)}
+p.shref{font-size:13px;margin:6px 0 2px;color:var(--muted)}p.shref a{color:var(--accent)}
+#twplist summary,#yrlist summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font:600 14px var(--f-body)}
+#twplist .tc,#yrlist .tc{font:500 12px var(--f-mono);color:var(--muted)}
+.tbg{font:600 10.5px var(--f-mono);color:var(--tc,var(--muted));white-space:nowrap}.tbg::before{content:"\25CF\00a0"}
+ul.chrono{list-style:none;padding-left:0;margin:6px 0}
+ul.chrono li{display:grid;grid-template-columns:4.2em 6em 1fr;gap:4px 8px;padding:5px 0;border-top:1px solid var(--rule);font-size:14px;margin:0}
+ul.chrono .cy{font:600 12.5px var(--f-mono)}
+@media (max-width:520px){ul.chrono li{grid-template-columns:4em 1fr}ul.chrono .ct{grid-column:1/-1}}
+.rsrch{display:flex;align-items:center;gap:6px;flex:1 1 100%;max-width:640px}#rsq{flex:1;min-width:0;font:14px var(--f-body);padding:5px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink)}#rsq::-webkit-search-cancel-button{display:none}#rsx{border:0;background:none;color:var(--muted);font:600 20px var(--f-body);cursor:pointer;line-height:1;padding:0 4px}.rsn{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap}.rs-off{display:none!important}.rsrch[hidden]{display:none!important}
+.ordbar{margin:0 0 8px}#records.ord-year #ordtop{display:none}.ordseg{align-items:center;flex-wrap:wrap}
+.yrbar{display:flex;flex-wrap:wrap;gap:6px 24px;align-items:center;margin:6px 0 8px}
+#yrlist table.twt td.t{white-space:nowrap}
+#records.ord-year .tabs{display:none}
+.twb{padding:4px 0 8px 14px}
+.twh,.twsrc{font-size:13px;margin:4px 0}
+.twsrc{color:var(--muted)}.twsrc a{color:var(--accent)}
+table.twt{font-size:13px}@media (max-width:700px){table.twt{display:block;max-width:100%;overflow-x:auto}}i,li,p{overflow-wrap:anywhere}@media (max-width:700px){table.ht{display:block;max-width:100%;overflow-x:auto}}
+table.twt th{text-align:left;font:600 11px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 6px 3px 0}
+.bs{display:inline-block;margin-left:6px;font:500 10px var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--rule);border-radius:3px;padding:0 4px}
+.also{display:block;font-size:12px;color:var(--muted)}
+h4.twm{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:10px 0 4px}
+.tonly{margin:8px 0}.tonly summary{font:500 13px var(--f-body);color:var(--muted)}.why2{font-size:12.5px;color:var(--muted);margin:4px 0}
+.twr{margin:4px 0 8px;font-size:13px}.twr ul{margin:2px 0 0;padding-left:18px}.twr li{margin:2px 0}
+
+/* reorganized layout: nav, filter panel, tabs, reference accordion */
+html{scroll-behavior:smooth}[id]{scroll-margin-top:52px}
+.toc{position:sticky;top:0;z-index:30;display:flex;gap:4px 14px;flex-wrap:nowrap;overflow-x:auto;background:var(--bg);border-bottom:1px solid var(--rule);padding:8px 2px;margin:0;font:600 13px var(--f-body);scrollbar-width:thin}
+.toc a{color:var(--ink);text-decoration:none;white-space:nowrap;padding:2px 0;border-bottom:2px solid transparent}
+.toc a:hover,.toc a:focus-visible{border-bottom-color:var(--accent);color:var(--accent)}
+#filters .frow{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13.5px;margin:0 0 10px}
+#filters .fc{display:contents}
+#filters .fc .seg{flex-wrap:wrap}
+#filters .fsep{flex-basis:100%;height:0}
+#filters h2.fh{font:700 15px var(--f-display);margin:0 0 8px;letter-spacing:.02em}.ftop{justify-content:space-between;gap:10px 28px}.ftop .tfbar{margin:0;flex:1 1 420px}.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}#nyrow .fbar{color:var(--rule)}#nyrow #twfilter{margin:0}#nyrow #twfilter[open]{flex-basis:100%}#nybox{display:contents}
+#filters .arrl{font:500 12px var(--f-mono);color:var(--muted)}
+details.tf>summary{cursor:pointer;font:600 14px var(--f-body);padding:4px 0}
+details.tf[open]>summary{margin-bottom:6px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--rule);margin:8px 0 12px}
+.tabs button{font:600 14px var(--f-body);background:transparent;color:var(--ink);border:1px solid var(--rule);border-bottom:none;border-radius:6px 6px 0 0;padding:7px 14px;cursor:pointer;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{background:var(--paper);border-color:var(--accent);color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.tp[hidden]{display:none}
+details.ref{border-top:1px solid var(--rule);padding:8px 0}
+details.ref>summary{cursor:pointer;font:700 17px var(--f-display);padding:2px 0}
+details.ref[open]>summary{margin-bottom:8px}
+.lbn{white-space:nowrap}
+.lb-cols{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+@media (max-width:700px){.tabs button{padding:6px 10px;font-size:13px}}
+
+.ht th.twh{background:var(--accent);color:#fff;font:700 15px var(--f-display);padding:7px 10px;border-radius:3px;letter-spacing:.01em}
+.ht th.twh .bs{font:500 12px var(--f-body);color:#fff;border:0;padding:0;text-transform:none;letter-spacing:0;margin-left:8px;white-space:normal}
+#filters .frow+.frow,#filters details.tf+.frow{margin-top:2px}
+#filters details.tf{margin:0 0 10px}
+.ht td.why2{border-left:3px solid var(--accent)}
+details.tf>summary .tfc{font:500 12px var(--f-mono);color:var(--muted);margin-left:6px}
+.howbox{margin:10px 0 0;border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:6px;padding:6px 12px;max-width:none;background:var(--paper)}
+.howbox>summary{cursor:pointer;font:700 14px var(--f-body);color:var(--ink)}
+.howbox ul{margin:6px 0 4px;padding-left:18px;font-size:13.5px;color:var(--muted)}
+.howbox li{margin:4px 0}.howbox a{color:var(--accent)}
+.kd{display:inline-block;font:600 10.5px var(--f-mono);text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--twp);color:var(--twp);border-radius:3px;padding:0 4px;margin-right:4px;white-space:nowrap}
+.kd.tl{border-style:dashed;color:var(--muted);border-color:var(--muted)}
+.ratjump{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 4px;scroll-margin-top:48px}
+.ratjump a.chip{text-decoration:none;font-size:12.5px;padding:3px 9px}.ratjump .jn{font:500 11px var(--f-mono);color:var(--muted)}
+.ht th.twh{scroll-margin-top:48px}
+.ht th.twh a.totop{float:right;color:#fff;font:500 12px var(--f-body);text-decoration:underline}
+.idxbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 8px;font-size:13.5px}
+.idxbar input{font:14px var(--f-body);padding:5px 9px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);min-width:0;width:200px;max-width:100%}
+#idxlist details{border-bottom:1px solid var(--rule)}
+#idxlist summary{cursor:pointer;padding:6px 2px;font:600 14.5px var(--f-body);display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+table.ht.tl td{vertical-align:top;font-size:13px}table.ht.tl td.b{min-width:120px}table.ht.tl a{color:var(--accent)}
+.tlw{overflow-x:auto;margin:0 0 10px}
+.notes .kd,.zhint .kd{margin-left:2px}
+.tfbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px}
+.tfbar select{font:600 14px var(--f-body);padding:5px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);min-width:0;max-width:100%;flex:1 1 180px}
+#tfout{max-height:560px;overflow:auto;padding-right:4px}
+#tfout h3{font:700 16px var(--f-display);margin:2px 0 2px}
+#tfout details{border-top:1px solid var(--rule);padding:5px 0}
+#tfout summary{cursor:pointer;font:600 14px var(--f-body);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+#tfout summary .im{font:500 12px var(--f-mono);color:var(--muted)}
+#tfout ul{margin:4px 0 4px;padding-left:18px;font-size:13px;color:var(--muted)}
+#tfout li{margin:3px 0;overflow-wrap:anywhere}#tfout li b{color:var(--ink)}#tfout a{color:var(--accent)}
+#tfout button.go{font:600 12px var(--f-body);color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;margin-left:auto}
+text.lk{cursor:pointer;pointer-events:all}text.lk:hover{fill:var(--accent)}
+text.twplabel.tfc{cursor:pointer;pointer-events:all}
+text.twplabel.tfc:hover{fill:var(--accent);opacity:1}
+text.twplabel.tfon{fill:var(--accent);opacity:1;text-decoration:underline}
+#pop{position:fixed;inset:0;z-index:70;background:#0006;display:flex;align-items:center;justify-content:center;padding:16px}
+#popb a{color:var(--accent)}#popb li b{color:var(--ink)}
+#pop .popin{position:relative;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:10px;box-shadow:0 8px 30px #0005;padding:16px 18px;width:min(560px,100%);max-height:min(80vh,640px);display:flex;flex-direction:column}
+#pop h3{font:700 18px var(--f-display);margin:0 118px 4px 0}
+/* pop-up: drag the bottom-right corner to resize; Expand makes it large */
+#pop .popin{box-sizing:border-box;resize:both;overflow:auto;min-width:min(320px,100%);min-height:220px;max-width:95vw;max-height:90vh}
+#pop .popin:not(.big):not(.sized) #popb{max-height:calc(min(80vh,640px) - 120px)}
+#pop .popin.big{width:min(92vw,960px);max-height:85vh}
+#popb{flex:1 1 auto;min-height:0}
+#popz{position:absolute;top:9px;right:40px;font:600 12px var(--f-body);border:1px solid var(--rule);background:transparent;color:var(--ink);padding:3px 9px;border-radius:99px;cursor:pointer;line-height:1.3}
+#popz[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+#popb{overflow:auto;font-size:14px}#popb p{margin:0 0 6px;color:var(--muted);font-size:12.5px}#popb ul{margin:4px 0 0;padding-left:18px}#popb li{margin:3px 0}
+#pop .popf{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+#popx{position:absolute;top:8px;right:10px;border:0;background:none;color:var(--muted);font:600 22px var(--f-body);cursor:pointer;line-height:1}
+.oldtw{display:none}
+i.tmk{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:2px solid var(--ink);background:var(--paper);font:600 10px var(--f-mono);font-style:normal;color:var(--ink);flex:none}
+g.tm .c{fill:var(--paper);stroke:var(--ink);stroke-width:2.2}g.tm:hover .c,g.tm:focus-visible .c{stroke:var(--accent);stroke-width:3}
+i.tmk.sq{border-radius:5px;width:24px}
+g.tm.on .c{stroke:var(--accent);stroke-width:3.4}
+g.tm text.n{font:700 10.5px var(--f-mono);fill:var(--ink);pointer-events:none}
+.cdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;flex:none}
+#popb h4{font:700 14px var(--f-body);margin:10px 0 2px;display:flex;align-items:center;gap:0;color:var(--ink)}#popb h4 .im{font:500 12px var(--f-mono);color:var(--muted);margin-left:8px}
+#popb h4 .tg{margin-left:auto;font:600 12px var(--f-body);color:var(--accent);text-decoration:underline}#popb details>summary .tg::after{content:'show records'}#popb details[open]>summary .tg::after{content:'hide records'}
+#popb details>summary{cursor:pointer;list-style:none}#popb details>summary::-webkit-details-marker{display:none}
+#popb details{border-top:1px solid var(--rule)}#popb details>summary h4::before{content:'▸';margin-right:6px;color:var(--muted);font-size:11px}#popb details[open]>summary h4::before{content:'▾'}
+h3.sub .im{font:500 12px var(--f-mono);color:var(--muted)}
+.zhint a{color:var(--accent)}
+#idxlist summary .im{font:500 12px var(--f-body);color:var(--muted)}
+#idxlist ul{margin:0 0 10px;padding-left:20px;font-size:13.5px;color:var(--muted)}
+#idxlist li{margin:4px 0;overflow-wrap:anywhere}
+#idxlist li b{color:var(--ink)}
+#idxlist button.go{font:600 12px var(--f-body);color:var(--accent);background:none;border:0;padding:0 2px;cursor:pointer;text-decoration:underline}
+
+/* ---- v106 typography & spacing refinement (display only) ---- */
+body{font-family:var(--f-sans);color:var(--body-ink);font-variant-numeric:tabular-nums;padding-block:14px 32px;-webkit-font-smoothing:antialiased}
+.wrap{gap:12px}
+h1,h2,h3,h4,table,.place,.tabs button,#filters,.toc{color:var(--ink)}
+header .eyebrow{font:600 .6875rem/1.3 var(--f-sans);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+header h1{font:700 1.875rem/1.2 var(--f-sans);letter-spacing:-.025em;color:var(--ink)}
+header>p{font-size:.875rem;line-height:1.55;color:var(--sub-ink);max-width:82ch;margin:6px 0 0}
+header>p b{color:var(--ink);font-weight:600}
+.howbox{margin:8px 0 0;padding:5px 12px}
+.howbox ul{margin:4px 0 2px}
+.toc{padding:6px 2px}
+.howbox ul{line-height:1.45}.howbox li{margin:2px 0}
+#filters.sheet{padding:10px 12px}#filters .tfbar{flex-wrap:wrap;min-width:0}#filters .ftop .tfbar{flex:1 1 0;min-width:0}#filters .tfbar select{flex:1 1 160px;width:0;min-width:140px}#filters .frow{margin:0 0 7px}#filters h2.fh{margin:0 0 6px}
+h2,#filters h2.fh,details.ref>summary,#tfout h3,#pop h3,.ht th.twh{font-family:var(--f-sans);letter-spacing:-.01em}
+#filters h2.fh{font-size:15px;font-weight:700;letter-spacing:-.01em}
+/* Filters & quick jump */
+#filters .arrl,.arrl{font:500 12.5px var(--f-sans);font-style:normal;color:var(--muted);letter-spacing:0}
+#filters .frow{font-size:13.5px;font-weight:500;color:var(--ink)}
+#filters label.ck,#filters select,#filters .tfbar select,#filters .seg button,#filters .tfc,#filters summary,#filters output{font-size:13.5px;font-weight:500;color:var(--ink);font-family:var(--f-sans)}
+#filters .seg button[aria-pressed="true"]{color:var(--paper)}
+#filters .yr output{min-width:2.8em}
+#cbtns .nyt,#nybox .nyt{color:var(--muted)}
+/* numbers line up */
+.yr output,.zbar output,td.y,td.a,td.b,.lbn,.tc,.im,.rsn,.cy,.place .n,.key,i.tmk,.tfc,svg text{font-variant-numeric:tabular-nums}
+/* Map SVG: sans-serif, no italics, white halo */
+#map text{font-family:var(--f-sans);font-style:normal;paint-order:stroke fill;stroke:var(--paper);stroke-width:1.5px;stroke-linejoin:round}
+#map text:not(.lk):not(.tfc){pointer-events:none}
+#map g.mk text,#map g.tm text{stroke:none}
+#map .twplabel{font-size:12.5px;font-weight:600;fill:var(--ink);letter-spacing:0;text-transform:none;opacity:1}
+#map .twplabel.wj{fill:var(--jline)}
+#map .ctx,#map .rivlabel{font-size:11px;font-weight:500;fill:var(--sub-ink);letter-spacing:0}
+#map .placelabel{font-size:11.5px;font-weight:600;fill:var(--ink)}
+#map .terbig,#map .tersub,#map .terlabel,#map .ridgelabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;fill:var(--muted)}
+#map .maplabel,#map .roadlabel,#map .yrlabel{font-weight:500;letter-spacing:0}
+#map .cntylabel{font-weight:700;letter-spacing:.12em}
+#map .jside,#map .jlabel{font-weight:600;letter-spacing:0}
+#map text.lk:hover,#map text.twplabel.tfc:hover,#map text.twplabel.tfon{fill:var(--accent)}
+#map text.twplabel.tfon{text-decoration:underline}
+
+/* ---- v107 records tables & township blocks (display only) ---- */
+.ht th,table.twt th,table.ht.tl th{font:600 11.5px/1.3 var(--f-sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:6px 10px 6px 0}
+.ht th.twh{font:700 15px/1.3 var(--f-sans);text-transform:none;letter-spacing:-.01em;color:#fff;padding:7px 10px}
+.ht td,table.twt td,table.ht.tl td{font:400 13.5px/1.45 var(--f-sans);color:var(--body-ink);padding:5px 10px 5px 0;vertical-align:top}
+.ht td.y,table.twt td.y,table.ht.tl td.y,ul.chrono .cy{font:600 13.5px/1.45 var(--f-sans);font-variant-numeric:tabular-nums;color:var(--ink)}
+.ht td.b,table.twt td.b,table.ht.tl td.b,.ht td.a,table.twt td.a{font:400 13.5px/1.45 var(--f-sans);font-variant-numeric:tabular-nums}
+table.twt td.a,.ht td.a{text-align:right}
+.ht td.b,table.twt td.b{color:var(--sub-ink)}
+td .bs,.twr .bs,.also+.bs{display:inline-block;margin-left:6px;font:600 10.5px/1.5 var(--f-sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:color-mix(in srgb,var(--muted) 10%,transparent);border:1px solid color-mix(in srgb,var(--muted) 28%,transparent);border-radius:4px;padding:0 5px;vertical-align:1px;white-space:nowrap}
+.ht th.twh .bs{font:500 12px var(--f-sans);color:#fff;background:none;border:0;padding:0;text-transform:none;letter-spacing:0}
+/* ---- v110 Index of individuals: resolved profiles + complete index ---- */
+#p-idx h3.idxh{font:600 16px var(--f-sans);margin:18px 0 6px;padding-top:6px;border-top:1px solid var(--rule);color:var(--ink)}
+.cfb{display:inline-block;font:600 10.5px/1.5 var(--f-sans);letter-spacing:.04em;text-transform:uppercase;padding:0 7px;border-radius:99px;border:1px solid currentColor;white-space:nowrap;vertical-align:1px}
+.cfb.pv{color:#166534;background:#16653412}.cfb.pb{color:#1d4f8f;background:#1d4f8f12}.cfb.pp{color:#8a5a00;background:#8a5a0014}.cfb.hy{color:#64748b;background:#64748b12}
+#resgrp details.rg{border:1px solid var(--rule);border-radius:8px;margin:0 0 8px;background:var(--paper)}
+#resgrp details.rg>summary{cursor:pointer;padding:9px 12px;font:600 14.5px var(--f-sans);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+#resgrp .rgb{padding:2px 12px 10px}
+#resgrp .rgb p{margin:0 0 6px;font-size:13.5px;color:var(--body-ink)}
+#resgrp ul{list-style:none;padding:0;margin:4px 0 6px}
+#resgrp li{padding:6px 0;border-top:1px solid var(--rule);font-size:13.5px;line-height:1.45}
+#resgrp li .cfb{margin-left:4px}
+#resgrp .rgf{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+#resgrp .rgs{font-size:12px;color:var(--muted);margin:6px 0 0}
+.idxnote{margin:0 0 8px}
+/* ---- v111 research management, Phase 1 ---- */
+.rsbar{margin:0 0 10px;padding:8px 10px;border:1px dashed var(--rule);border-radius:8px;background:color-mix(in srgb,var(--paper) 94%,var(--muted))}
+.rsrow1{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:0 0 6px}.rshint{margin:0!important}
+#rsadm[aria-pressed=true],.rstabs .chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.rsstat{margin:2px 0 6px;font:500 12.5px var(--f-sans);color:var(--muted)}
+.chip.prim{background:var(--accent);color:#fff;border-color:var(--accent)}.chip.dng{color:#b91c1c;border-color:#b91c1c}
+.aserr{color:#b91c1c;font:500 12.5px var(--f-sans);margin:4px 0}
+.rsw{display:inline-block;margin:0 6px 0 0;vertical-align:-2px}.rsw input{width:16px;height:16px;cursor:pointer}
+tr.rs-sel>td{background:color-mix(in srgb,var(--accent) 7%,var(--paper))}
+.asl{margin-top:4px;font:600 11.5px var(--f-sans);color:#166534}
+body.hasbar{padding-bottom:var(--asbh,150px)}
+#asbar{position:fixed;left:0;right:0;bottom:0;z-index:1500;background:var(--paper);border-top:2px solid var(--accent);box-shadow:0 -6px 20px #0f172a26;padding:8px 14px calc(8px + env(safe-area-inset-bottom,0px))}
+#asbar .aspanel{max-height:34vh;overflow:auto;margin:0 0 8px}
+#asbar .asr{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13.5px}#asbar select,#asbar input[type=text]{font:13.5px var(--f-sans);padding:4px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);max-width:100%}
+.asrow{display:grid;grid-template-columns:1fr;gap:4px;padding:6px 0;border-top:1px solid var(--rule)}.asrow .asm{font-size:12.5px;color:var(--body-ink)}
+.asrow .ascf,.asrow .asex,.asrow input,.asrow select{font:13px var(--f-sans);padding:4px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);min-width:0}
+@media (min-width:760px){#asbar .asrow{grid-template-columns:minmax(0,1.3fr) 110px minmax(0,1.5fr)}}
+.rsmodal{position:fixed;inset:0;z-index:2000;background:#0f172a66;display:flex;align-items:flex-start;justify-content:center;padding:4vh 10px;overflow:auto}.rsmodal[hidden]{display:none}
+.rsconf{z-index:2100;align-items:center}.rsmin{background:var(--paper);border-radius:10px;padding:14px 16px;width:min(560px,100%);box-shadow:0 12px 40px #0f172a55}.rsmin.wide{width:min(860px,100%)}
+.rsmh{display:flex;justify-content:space-between;align-items:center;gap:10px}.rsmh h3{margin:0;font:600 17px var(--f-sans)}
+.rstabs{display:flex;gap:6px;margin:8px 0}.rslist{list-style:none;padding:0;margin:6px 0}.rslist li{padding:7px 0;border-top:1px solid var(--rule)}
+.rsform{display:grid;gap:8px}.rsform label{display:grid;gap:3px;font:600 12.5px var(--f-sans);color:var(--muted)}.rsform input,.rsform textarea{font:14px var(--f-sans);padding:6px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box}
+.rsmin h4{margin:12px 0 4px;font:600 14px var(--f-sans)}.rsact{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 0}.rsrr{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rsdata{width:100%;box-sizing:border-box;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:8px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink)}
+/* ---- v112 research Phase 2 ---- */
+.rsselbar{margin-top:6px}.rsselbar input{font:13.5px var(--f-sans);padding:5px 9px;border:1px solid var(--rule);border-radius:6px;background:var(--paper);color:var(--ink);width:160px;max-width:100%;min-width:0}.rsselbar select{flex:0 1 340px;max-width:100%}
+.rscard{margin:8px 0 10px;padding:10px 12px;border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:8px;background:var(--paper);font-size:13.5px}
+.rscard h4{margin:0 0 2px;font:600 15px var(--f-sans)}.rscard p{margin:4px 0}.rscard .rgf{margin-top:6px}
+.rscard details{margin:6px 0 0}.rscard ul{margin:4px 0;padding-left:18px}
+.idxh2{margin:14px 0 6px;font:600 13px var(--f-sans);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.rsli{margin:3px 0}.rsli .ex{color:var(--muted)}
+/* ---- v113 research Phase 3 ---- */
+#map g.mk.rslo{opacity:.25}
+#map .rsring{pointer-events:none}
+#map .rsbn{font:700 9px var(--f-sans);fill:#fff;pointer-events:none}
+.rspoplist{list-style:none;padding:0;margin:6px 0}.rspoplist li{padding:7px 0;border-top:1px solid var(--rule)}.rspoplist .ex{color:var(--muted)}
+.lgring{vertical-align:-6px;margin-right:4px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Kent family research / Historical records</div>
+  <h1>Explore Kent &amp; Kint Records in Northern New Jersey</h1>
+  <p>Explore land, tax, census, military, court and family records across six New Jersey counties, 1721 to 1890.</p>
+  <p><b>Research limitations:</b> Locations are approximate, based on historical descriptions rather than plotted surveys. Entries are name matches only: one name may be several men, and nothing here asserts kinship between any two entries. <b>The records were transcribed with AI assistance and may contain errors; consult the original record before relying on any entry.</b> Sources are given with each record where known.</p>
+  <details class="howbox" id="quick"><summary>How to use this map</summary>
+    <ul>
+      <li><b>Choose what to see.</b> In Filters, pick counties or townships and tick the kinds of record. The map and every list follow that choice.</li>
+      <li><b>Read the markers.</b> Numbered circle = a township as the records name it; the number is how many records name it; its pop-up window lists them in order of year, each with a coloured badge for its kind of record (Land, Tax, Census, Military, Court, B/M/D, Misc). Numbered squares in the bar directly below the map = records that name only the county (they are not placed on the map). Letter = one particular place in Morris County. ◇ = the Swine Field court case. Hover over a marker for a summary; click it for a pop-up window listing its records.</li>
+      <li><b>Look at one township.</b> Click a township name on the map, or pick one from the "Jump to place" list in Filters, under Years (◀ and ▶ step to the previous or next place). The map zooms to it straight away and its records open in a panel beside the map. You can also pick a whole county from the same list. Choose "Currently Entire Map" (or press "× Entire map" on the panel) to close the panel and return to the full-width map.</li>
+      <li><b>Find a record.</b> Under the map, each township lists all its records in order of year. A coloured badge in the Type column shows the kind: land, tax ratables and lists, census, military, court, birth, marriage and death, or miscellaneous. Tick or untick the kinds in &quot;Record types&quot; (in Filters), and use &quot;Order records&quot; to switch between &quot;By year&quot; and the older &quot;By record type&quot; tabs. The Index of individuals (see the links at the top of the page) opens with resolved individuals and family groups, then lists every name with the records that name it.</li>
+      <li><b>Terms.</b> &quot;Township only&quot; = the record names an old township, not a lot, so no exact spot is shown. &quot;n.d.&quot; = no date recorded. &quot;Deed workbook&quot; = the compiler’s deed research workbook; a dash in a book-and-page column = book and page were not recorded. † = acreage taken from the compiler’s research notes, not read from the deed.</li>
+    </ul>
+  </details>
+</header>
+
+<nav class="toc" id="toc" aria-label="Page sections">
+  <a href="#mapsec">Map</a><a href="#records">Records</a><a href="#records" data-tab="idx">Index of individuals</a><a href="#reference">About this map</a>
+</nav>
+
+<section class="sheet" id="filters" aria-label="Filters and quick jump">
+  <h2 class="fh">Filters &amp; quick jump</h2>
+  <div class="frow fyr"><div class="yr"><span class="arrl">Years:</span><label for="y0" class="vh">From</label><input type="range" id="y0" min="1720" max="1890" value="1720"><output id="o0">1720</output>
+        <label for="y1">to</label><input type="range" id="y1" min="1720" max="1890" value="1890"><output id="o1">1890</output></div></div>
+  <div class="frow ftop"><div class="tfbar tftop"><label for="tfsel" class="arrl">Jump to place:</label><select id="tfsel" aria-label="Jump to a county or township"></select><button type="button" class="chip" id="tfgo" hidden>Select</button><button type="button" class="chip" id="tfprev" aria-label="Previous township">◀</button><button type="button" class="chip" id="tfnext" aria-label="Next township">▶</button></div><div class="tfbar tftop rsselbar"><label for="rssel" class="arrl">Individual / Family Group:</label><input type="search" id="rsselq" placeholder="Search names…" aria-label="Search individuals and family groups" autocomplete="off"><select id="rssel" aria-label="Show only the records linked to an individual or family group"><option value="">All Records</option></select></div></div>
+  <div id="rscard" class="rscard" hidden aria-live="polite"></div>
+  <div class="frow">
+<div class="fc">
+      <div class="seg" id="cbtns" role="group" aria-label="New Jersey counties to show"><span class="arrl">Filter New Jersey:</span></div>
+    </div>
+  </div>
+  <div class="frow" id="nyrow"><span class="arrl">Filter New York:</span><span id="nybox"></span><span class="fbar" aria-hidden="true">|</span>
+  <details id="twfilter" class="tf"><summary>Townships <span class="tfc" id="twcount"></span></summary>
+    <p class="zhint" style="margin:6px 0 0">Tick the townships you want; what you tick applies to every kind of record below. A record whose place could lie in more than one present township is listed under each, so the numbers overlap. Townships are proposed from the place named in each record (tax ratables and township-only deeds give an old township, so they follow every present township it could lie in). Tick a county name to tick or untick all its townships. Three tax-list groups have no present township to follow (Essex County with no township given, Franklin Twp. in Bergen, Newtown Twp. in Sussex); they show whenever any township of their county is ticked. The numbers beside a township are land deeds only: <b>deeds</b> at a named place; <b>+ more</b> = deeds recorded only by an old township that could lie here; <b>places</b> = Morris places.</p>
+  <div class="lb-top"><button type="button" class="chip" id="lbAll">All townships</button><button type="button" class="chip" id="lbNone">None</button><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div></div>
+    <div class="lb-cols" id="lbcols"></div>
+  </details>
+  </div>
+  <div class="frow"><span class="arrl">Record types:</span>
+    <label class="ck"><input type="checkbox" id="landall" checked><b>Land</b></label>
+    <label class="ck"><input type="checkbox" id="ratall" checked><b>Tax</b></label>
+    <label class="ck"><input type="checkbox" id="cenall" checked><b>Census</b></label>
+    <label class="ck"><input type="checkbox" id="milall" checked><b>Military</b></label>
+    <label class="ck"><input type="checkbox" id="courtall" checked><b>Court</b></label>
+    <label class="ck"><input type="checkbox" id="bmdall" checked><b>B/M/D</b></label>
+    <label class="ck"><input type="checkbox" id="miscall" checked><b>Misc</b></label>
+  </div>
+  <details id="morefilters" class="tf"><summary>Map layers</summary>
+  <div class="frow">
+    <label class="ck"><input type="checkbox" id="twpl">Township lines (c. 1830)</label>
+    <label class="ck"><input type="checkbox" id="rds">Roads</label>
+    <label class="ck"><input type="checkbox" id="jl">East/West Jersey lines (approx.)</label>
+    <label class="ck"><input type="checkbox" id="wjs">Shade the proposed West Jersey side (1688 line)</label>
+    <label class="ck"><input type="checkbox" id="ter" checked>Terrain: mountains and valleys (schematic)</label>
+  </div>
+  </details>
+</section>
+
+<div class="grid">
+  <section class="sheet" id="mapsec" aria-label="Map">
+    <div class="mapbox"><div class="zbar" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button></div>
+    <div id="zmsg" aria-hidden="true">Hold Ctrl (or ⌘) and scroll to zoom the map</div><svg id="map" role="img" aria-label="Map of Kent and Kint records in northern New Jersey"></svg>
+    </div>
+    <div id="cmbar" class="cmbar" role="group" aria-label="County-level records"></div>
+    <p class="zhint">Click a township name on the map to zoom to that township and list its records beside the map. Click a numbered township marker for a pop-up window of every record that names the township; click a lettered marker for that place's records.</p>
+    <details class="legd" id="legd"><summary>Map Legend &amp; Marker Key</summary>
+    <div class="legend">
+      <span><i class="tmk">12</i>Township marker: the number is how many records name that township; click it for a pop-up window of all of them. Position is approximate (the middle of the township's named places, or its name on the map), not a lot.</span>
+      <span><i class="tmk sq">89</i>County-level records (square badge, in the bar directly below the map, not on the map): records that name only the county, or no place. Click a badge for a pop-up window of them.</span>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg>Solid ring (when an individual or family group is selected): at least one <b>Proven</b> record for that selection is at this location.</span>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="4 3"/></svg>Dashed ring: only <b>Probable</b> records for that selection are here.</span>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="15" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="19" cy="7" r="6" fill="var(--accent)" stroke="var(--paper)" stroke-width="1.5"/><text x="19" y="10" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">3</text></svg>Small red badge: how many of the selection&rsquo;s linked records are at this location. Markers with no ring fade to a quarter strength but stay clickable. Click a ringed marker for just that selection&rsquo;s records, with a button to show everything there.</span>
+      <span>In a marker's pop-up window, a coloured dot marks each kind of record:</span>
+      <span><i class="dot" style="background:var(--c-land)"></i>Land</span><span><i class="dot" style="background:var(--c-tax)"></i>Tax Ratables/Lists</span><span><i class="dot" style="background:var(--c-cen)"></i>Census</span><span><i class="dot" style="background:var(--c-mil)"></i>Military</span><span><i class="dot" style="background:var(--c-court)"></i>Court</span><span><i class="dot" style="background:var(--c-bmd)"></i>B/M/D Records</span><span><i class="dot" style="background:var(--c-misc)"></i>Miscellaneous</span>
+      <span>Letter = Morris place. Its colour shows how firmly the place is located:</span>
+      <span><i class="dot" style="background:var(--accent)"></i>Red letter: place named in the record</span>
+      <span><i class="dot" style="background:var(--tag)"></i>Green letter: approximate locality, placed from a description</span>
+      <span><i class="dot" style="background:var(--twp)"></i>Brown letter: township only, nothing closer in the record</span>
+      <span><i class="sw r"></i>River or brook</span>
+      <span><i class="sw"></i>Road or turnpike</span>
+      <span><i class="sw c"></i>Morris Canal (1831)</span>
+      <span><i class="sw b"></i>Township line, c. 1830</span>
+      <span><i class="sw jl"></i>Red line: Coxe–Barclay line, 1688. Proposed, then rescinded, so not a permanent boundary (dashed = implied course)</span>
+      <span><i class="sw jld"></i>Dotted line: Lawrence line, 1743 (approx.). The line finally accepted (NJ Supreme Court, 1855)</span>
+      <span><i class="sw wjs"></i>Red shading: the proposed West Jersey side, if the 1688 line had held (not a permanent boundary; township names in orange)</span>
+      <span><i class="sw ter"></i>Terrain (tick the box): triangles = ridge or mountain; brown tint = Highlands upland, schematic</span>
+      <span><i class="sw terw"></i>Terrain: blue-green = former Lake Passaic basin and meadows, schematic</span>
+      <span><i class="sw lfs"></i>Little Falls section (outline approximate; lighter = the part taken for West Paterson in 1914)</span>
+      <span id="swleg">◇ Swine Field (court case, not a deed)</span>
+    </div>
+    </details>
+  </section>
+
+  <section class="sheet" aria-label="Township records and place register">
+    <div id="tfsec">
+    <div class="tfhead"><h2 id="tfh">Township or county records</h2><button type="button" class="chip" id="tfclose" aria-label="Close this panel and show the entire map">× Entire map</button></div>
+    <div id="tfout" aria-live="polite"></div>
+    </div>
+    <div class="list" id="list" hidden></div>
+  </section>
+</div>
+
+<section class="sheet" id="records" aria-label="Records">
+  <h2>Records</h2>
+  <div class="ordbar" id="ordtop"><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div class="tabs" role="tablist" aria-label="Record types">
+    <button type="button" role="tab" data-t="deeds" aria-selected="true">Land</button>
+    <button type="button" role="tab" data-t="rat" aria-selected="false" tabindex="-1">Tax Ratables/Lists</button>
+    <button type="button" role="tab" data-t="cen" aria-selected="false" tabindex="-1">Census</button>
+    <button type="button" role="tab" data-t="mil" aria-selected="false" tabindex="-1">Military</button>
+    <button type="button" role="tab" data-t="court" aria-selected="false" tabindex="-1">Court</button>
+    <button type="button" role="tab" data-t="bmd" aria-selected="false" tabindex="-1">B/M/D Records</button>
+    <button type="button" role="tab" data-t="misc" aria-selected="false" tabindex="-1">Miscellaneous</button>
+  </div>
+  <div class="tp" id="p-year" role="tabpanel"><p class="zhint" style="margin:0 0 6px">Each township lists every record placed in it, <b>in order of year</b> (records with no date last), with the kind of record shown by a coloured badge in the Type column. &quot;Named place&quot; means the record names a locality and the present township is proposed from it; &quot;township only&quot; means the record gives just an old township (or county), so it is listed once, in a shaded shared block at the top of its county, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a lot lay in on the ground. What is listed follows the township, record-type and year choices in Filters. AI-assisted transcriptions; check the original.</p>
+  <div class="yrbar"><div class="rsrch" id="rsrch" role="search"><input type="search" id="rsq" placeholder="Search records by name, deed book, or place…" aria-label="Search records by name, deed book, or place" autocomplete="off"><button type="button" id="rsx" aria-label="Clear the search" hidden>×</button><span id="rsn" class="rsn" aria-live="polite"></span></div><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div id="yrlist"></div>
+  <div id="yrcty"></div></div>
+  <div class="tp" id="p-deeds" role="tabpanel" hidden><div id="twpsec">
+  <p class="zhint" style="margin:0 0 6px">Each township lists the deeds placed in it and the history of the township or borough. "Named place" means the record names a locality and the present township is proposed from it; "township only" means the record gives just an old township, so it is listed once, in a shaded shared block at the top of its county, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a deed lot lay in on the ground. Deeds come from the Deed workbook, plus eleven Essex, Bergen, Passaic and Sussex deeds and mortgages added from the compiler’s own transcription files (those rows give the book and pages as the file does; book letters are not visible on the images). Morris County records are the lettered places. Morris places D (estate division), K (a will) and R (church baptisms) are not land deeds and are not filtered by the box.</p>
+  <div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div>
+  <div id="twplist"></div>
+  <div id="nodeeds" style="scroll-margin-top:48px">
+  <h3 class="sub">Deeds with no township given</h3>
+  <p class="zhint" style="margin:0 0 4px">The deed index gives no township for these. Three are shown at a Morris place from the deed text; the rest are not on the map.</p>
+  <ul class="notes" id="unplaced"></ul>
+  <h3 class="sub">Other deeds, mortgages and surveys with no place</h3>
+  <p class="zhint" style="margin:0 0 4px">Morris County land records that name no place, so they are not on the map.</p>
+  <ul class="notes" id="unplacedm"></ul>
+  </div>
+  </div></div>
+  <div class="tp" id="p-rat" role="tabpanel" hidden>
+  <p class="zhint" style="margin:0">Kents and Kints in the tax records, grouped by township as the record names it. Two kinds of record are listed, and each row is tagged:</p>
+  <ul class="notes" style="margin:4px 0 6px">
+    <li><span class="kd">ratable</span> A row from a township ratable book (NJ State Archives): usually acreage or stock, with book and page where recorded. Sources are the compiler’s transcriptions of Caldwell Books 504&#8211;512 and Acquackanonk Book 498, the compiler’s ratable notes on the Morris records, and the &quot;Tax Ratables&quot; rows of the compiler’s research notes (book and page not recorded; not checked against the books).</li>
+    <li><span class="kd tl">tax list</span> A row from &quot;Tax List, Vol. 2&quot; in the compiler’s research notes (per those notes, from stitched photos of <a href="http://ourfamilytree.net/assets/new-jersey---kent-surname-in-tax-list-index-new-jersey-tax-lists%2c-1772-1822%2c-vol.-2%2c-e-k-at-new-jersey-state-archives.pdf" target="_blank" rel="noopener">the Kent pages of the tax-list index, vol. 2, at the NJ State Archives</a>): a name and date only, no acreage. All of Essex County is included, plus the Morris, Bergen and Sussex rows done so far. Census rows are not listed.</li>
+    <li>The records give a township, not a lot, so they are counted in that township's numbered marker on the map; click the marker for a pop-up window of all its records.</li>
+    <li>The list follows the townships and years chosen in Filters. Groups marked &quot;shown with &#8230; County&quot; follow the county instead.</li>
+    <li>Every entry is a name match only: a shared name does not show one man or one family.</li>
+  </ul>
+  <p class="zhint" style="margin:0 0 6px"><b>Finding aid:</b> <a href="https://www.nj.gov/state/archives/guides/sas00001Digital.pdf" target="_blank" rel="noopener">New Jersey State Archives, Tax Ratables (Duplicates), 1768&#8211;1846, series SAS00001</a> (PDF). It lists every ratable book by county and township with its date, so a book number here can be looked up there (for example Caldwell Books 504&#8211;512, September 1810 to September 1822; Acquackanonk Book 498, September 1820).</p>
+  <nav class="ratjump" id="ratjump" aria-label="Jump to a township"></nav>
+    <div id="ratdet"><p class="zhint" style="margin:8px 0 4px"><b><span id="ratn"></span></b></p>
+      <table class="ht"><thead><tr><th>Year</th><th>Person</th><th>Entry as written</th><th>Book and page</th></tr></thead><tbody id="rattb"></tbody></table></div>
+  </div>
+  <div class="tp" id="p-cen" role="tabpanel" hidden>
+    <p class="zhint" style="margin:0 0 6px"><b>Census records</b>: the NJ Compiled Census, the 1830 federal census, census reconstructions and substitutes, and freeholder and poll lists. The compiler’s “May be duplicate” notes are kept as written; the NJ Compiled Census is an index built largely from tax lists, so many of its rows repeat a tax-list row. <b><span id="cenn"></span></b></p>
+    <p class="zhint" style="margin:0 0 6px">These rows come from the compiler’s research notes and were transcribed with AI assistance. The Source column names the source, with an image or book link where the notes have one. Check the original record before relying on an entry. They follow the counties, townships and years chosen in Filters, and are not on the map: <span class="kd tl">township only</span> means the record names a township but no spot in it, <span class="kd tl">county only</span> that it names only the county.</p>
+    <div id="cenlist"></div>
+  </div>
+  <div class="tp" id="p-mil" role="tabpanel" hidden>
+    <p class="zhint" style="margin:0 0 6px"><b>Military records</b>: Revolutionary War service, militia lists, War of 1812 and later enlistments, and pensions. The 1793 militia rows are from <a href="https://www.familysearch.org/library/books/records/item/297942-new-jersey-in-1793-an-abstract-and-index-to-the-1793-militia-census-of-the-state-of-new-jer-sey" target="_blank" rel="noopener"><i>New Jersey in 1793: an abstract and index to the 1793 militia census</i></a>. <b><span id="miln"></span></b></p>
+    <p class="zhint" style="margin:0 0 6px">These rows come from the compiler’s research notes and were transcribed with AI assistance. The Source column names the source, with an image or book link where the notes have one. Check the original record before relying on an entry. They follow the counties, townships and years chosen in Filters, and are not on the map: <span class="kd tl">township only</span> means the record names a township but no spot in it, <span class="kd tl">county only</span> that it names only the county.</p>
+    <div id="millist"></div>
+    <div id="milextra">
+    <h3 class="sub">Revolutionary War soldiers: the compiler’s summaries</h3>
+    <p class="zhint" style="margin:0 0 4px">From the “Known Revo War Soldiers in Essex Co., NJ” list at the head of the compiler’s research notes (rows 10–29), as written there. No image links are recorded.</p>
+    <ul class="notes">
+      <li><b>David Kent</b>: enlisted in the 3rd Regiment of the Continental Army for a two-year term, February 1776 to 1778, Captain Samuel Potter’s Company; 19 years old and a resident of Elizabeth at enlistment. Later lived in Caldwell; married three times (Mary Freeman, Leatie Earl, Sarah (Shipman) Ellis). Compiler’s note: the overlapping timelines of the first and second marriages must be resolved.</li>
+      <li><b>Jacob Kent (Sergeant)</b>: enlisted 27 Feb 1776 in the 3rd Regiment of the Continental Army, Capt. Peter Dickerson’s Company. At Valley Forge. Discharged “Reb. 9, 1790” as the workbook has it (the service-record notes below give 9 Feb 1780).</li>
+      <li><b>Jacob Kent (ca. 1757–1840)</b>: Essex Co., NJ Militia.</li>
+      <li><b>Simeon Kent</b>: enlisted 12 Feb 1776 in the 3rd Regiment of the Continental Army, Peter Dickerson’s Company.</li>
+      <li><b>Elias Kent</b>: enlisted 14 Nov 1775 in the 1st Regiment, 1st Establishment of the Continental Army.</li>
+      <li><b>Henry Kent (ca. 1776)</b>: Essex Co., NJ Militia, Capt. Josiah Pierson’s Co., 2nd Regiment.</li>
+      <li><b>Henry Kent</b>: Count Pulaski’s Legion, Continental Troops, private, third company infantry; at Yorktown. Compiler’s note: “Anson descendant mentioned Pulaski.”</li>
+      <li><b>Jonas Kent</b>: enlisted at Elizabethtown 12 Sep 1778, Capt. John Flahavan’s Co., 1st NJ Regiment, commanded by Matthias Ogden; private; at Valley Forge.</li>
+    </ul>
+    <h3 class="sub">Revolutionary War service records: the compiler’s notes</h3>
+    <p class="zhint" style="margin:0 0 4px">From the compiler’s sheet of Fold3 service records, one entry per man. The sheet gives page counts but no links or record numbers. Rows are in the compiler’s order; “?” marks are hers.</p>
+    <ul class="notes">
+      <li><b>Simeon Kent</b> (2 pages): Dayton’s NJ Battalion, private; enlisted 12 Feb 1776, Capt. Peter Dickinson / Elias Dayton; February to November 1776 in camp at Ticonderoga; deserted 15 May (1776 or 1777?).</li>
+      <li><b>Jonas Kent (Kint)</b> (81 pages): NJ First Regiment, private; enlisted 1 Mar 1777, Silas Howell’s Co. / Ogden; 1778 Capt. John Flahavan; Valley Forge March–April 1778; Mount Holly 12 Jun 1778 (sick at Princeton hospital); Wyoming June–July 1779; Easton October–November 1779; Scotch Plains November 1779; Capt. Aaron Ogden December 1779; camp 21 Jan 1780; Mendham March 1780, on guard; discharged August 1780?; camp Pompton January 1781 (“twice his name is Thomas”); Dobbs Ferry 1781; re-enlisted??? through 1782; mustered 10 May 1782.</li>
+      <li><b>Elias Kent</b> (2 pages): NJ First Regiment, private; enlisted 14 Nov 1775, Capt. Andrew McMyer’s Co., commanded by the Earl of Stirling, Elizabethtown, January 1776.</li>
+      <li><b>David Kint</b> (3 pages): Dayton’s NJ Battalion, private; enlisted 26 Feb 1776 at Elizabethtown for one year, Capt. Samuel Potter’s Co.; February to November 1776 at Ticonderoga; November to February 1777 in garrison on Mount Independence; 22 Feb 1777 sent to Albany, sick; to spring 1778; discharged in Morris Co., also discharged at Ticonderoga. Compiler’s note: the same man as the David Kent / Sarah Hyde pension (“Yes”).</li>
+      <li><b>Simeon/Simon Kent (Kint)</b> (15 pages): NJ First Regiment, private; muster 1 Nov 1777, Bethlehem, Capt. Daniel Baldwin’s Co. / Ogden; deserter 5 Jan 1778; sick at Newark January–February 1778; Valley Forge February 1778, sick in Jersey; deserter April 1778. Compiler’s question, still open: whether this is the same Simeon Kent as the Ticonderoga man above. The two are kept apart.</li>
+      <li><b>Sgt. Jacob Kent (Kint)</b> (60 pages): NJ 3rd Regiment, corporal then sergeant; enlisted 27 Feb 1776 and again 8 Jan 1777; Capt. Peter Dickinson; February to November 1776 at Ticonderoga; November 1777 Jeremiah Ballard’s Co. / Elias Dayton; Valley Forge February–May 1778; Mount Holly June 1778; Elizabethtown 4 Jan 1779; Wyoming June 1779; Easton July–September 1779; Scotch Plains November 1779; Jersey camp winter 1779–80; discharged 9 Feb 1780.</li>
+    </ul>
+    </div>
+  </div>
+  <div class="tp" id="p-court" role="tabpanel" hidden>
+    <p class="zhint" style="margin:0 0 6px"><b>Court records</b>: Common Pleas, Supreme Court, Orphans' Court and justice of the peace entries, wills and estates (probate, surrogate and guardianship entries, inventories), and the Swine Field case. A letter is the Morris place the record belongs to; <span class="kd tl">no place</span> means the record names no place, so it is not on the map. Switch them on or off with the "Court" box in Filters. <b><span id="courtn"></span></b></p>
+    <ul class="notes" id="courtlist"></ul>
+    <p class="zhint" style="margin:0 0 6px">The tables below come from the compiler’s research notes and were transcribed with AI assistance. The Source column names the source, with an image or book link where the notes have one. Check the original record before relying on an entry. They follow the counties, townships and years chosen in Filters, and are not on the map: <span class="kd tl">township only</span> means the record names a township but no spot in it, <span class="kd tl">county only</span> that it names only the county.</p>
+    <div id="courttl"></div>
+  </div>
+  <div class="tp" id="p-bmd" role="tabpanel" hidden>
+    <p class="zhint" style="margin:0 0 6px"><b>Birth, marriage and death records</b>: births and baptisms from church registers, marriages (church records, the Morris County marriage index and published abstracts), and deaths and burials. A letter is the Morris place the record belongs to; <span class="kd tl">township only</span>, <span class="kd tl">county only</span> and <span class="kd tl">no place</span> records are not on the map. Table rows come from the compiler’s research notes and marriage index and were transcribed with AI assistance; the Source column names the workbook, or the liber and page for the marriage index. Check the original record before relying on an entry. Death dates marked FindaGrave are from that site as the compiler recorded them, not from a death record. Switch them on or off with the "B/M/D Records" box in Filters. <b><span id="bmdn"></span></b></p>
+    <div id="bmdlist"></div>
+  </div>
+  <div class="tp" id="p-misc" role="tabpanel" hidden>
+    <p class="zhint" style="margin:0 0 6px"><b>Miscellaneous</b>: what does not fit the other tabs (church pledges and membership, poll and tax lists noted at a place, and other notes), grouped by kind. A letter is the Morris place the record belongs to; <span class="kd tl">township only</span> means the record names a township but no spot in it, and <span class="kd tl">no place</span> means it names no place at all; neither is on the map. Switch them on or off with the "Miscellaneous" box in Filters. <b><span id="miscn"></span></b></p>
+    <div id="misclist"></div>
+  </div>
+  <div class="tp" id="p-idx" role="region" aria-label="Index of individuals" hidden>
+    <p style="margin:0 0 6px"><button type="button" class="chip" id="idxback">&larr; Back to the records</button></p>
+    <p class="zhint" style="margin:0 0 8px">This tab has three parts. <a href="#idx-fam">1. Established family groups</a> and <a href="#idx-ind">2. Identified individual profiles</a> are conclusions worked out so far, each with how firmly it is established. <a href="#idx-all">3. The complete name appearance index</a> lists every name in every record on this page, whether or not it has been sorted into a person.</p>
+    <h3 class="idxh" id="idx-fam">1. Established Family Groups</h3>
+    <p class="zhint" style="margin:0 0 6px">Confidence: <span class="cfb pv">Proven</span> a record states it directly; <span class="cfb pb">Probable</span> indirect evidence only; <span class="cfb pp">Proposed</span> a candidate, not established; <span class="cfb hy">Hypothesis</span> a working idea. Kinship is never inferred from a shared name alone. &ldquo;Show on map&rdquo; zooms the map to the township.</p>
+    <div id="famgrp"></div>
+    <h4 class="idxh2">Compiler&rsquo;s research notes (built in)</h4>
+    <div id="resgrp"></div>
+    <h3 class="idxh" id="idx-ind">2. Identified Individual Profiles</h3>
+    <div class="idxbar"><label for="indq">Search profiles:</label><input type="search" id="indq" placeholder="name, place, explanation…" autocomplete="off"><b id="indn"></b></div>
+    <div id="indgrp"></div>
+    <h3 class="idxh" id="idx-all">3. Complete Name Appearance Index (all records)</h3>
+    <p class="zhint idxnote"><b>Read this first.</b> This index is built automatically from the names as written in every record on this page. Entries group identical given names, with the surname spellings Kent, Kint, Kindt and Kintt shown together under &ldquo;Kent&rdquo;, so <b>one entry may stand for several different people</b> (there are several Jacob, Elias and John Kents here), and one man may appear under two entries (Henry and Hendrick, Simon and Simeon are kept apart as written). A married woman whose maiden name is not recorded is shown as &ldquo;Kent, Elizabeth (____), wife of Alexander Kent&rdquo;; a wife or widow with no given name is shown as &ldquo;Kent, [Wife of Jacob]&rdquo; or &ldquo;Kent, [Widow of Daniel]&rdquo;. The husband is matched by given name only. Click a name to open its records; &ldquo;open&rdquo; goes to the tab that holds the record. It covers all records, whatever is chosen in Filters.</p>
+    <div class="idxbar"><label for="idxq">Find a name:</label><input type="search" id="idxq" placeholder="e.g. Jacob" autocomplete="off"><button type="button" class="chip" id="idxopen">Open all</button><button type="button" class="chip" id="idxclose">Close all</button><b id="idxn"></b></div>
+    <div id="idxlist"></div>
+  </div>
+</section>
+
+<section class="sheet" id="reference" aria-label="About this map">
+  <h2>About this map and its sources</h2>
+  <p class="zhint" style="margin:0 0 6px">Click a heading to open it.</p>
+<details class="ref" id="aisrc"><summary>How these records were transcribed, and their sources</summary>
+  <ul class="notes">
+    <li><b>AI-assisted transcription.</b> The entries on this page were transcribed and arranged with AI assistance, from the compiler’s workbooks and from images and transcriptions of the records. They may contain misreadings. Consult the original record before relying on any entry.</li>
+    <li><b>Tax ratables:</b> NJ State Archives, Tax Ratables (Duplicates), 1768–1846, series SAS00001 (<a href="https://www.nj.gov/state/archives/guides/sas00001Digital.pdf" target="_blank" rel="noopener">finding aid</a>); book and page are given where recorded.</li>
+    <li><b>Tax lists:</b> “Tax List, Vol. 2” rows of the compiler’s research notes, from the tax-list index at the NJ State Archives.</li>
+    <li><b>Census, military, court and other records in tables:</b> the compiler’s research notes, with a FamilySearch image link wherever the notes have one. Many rows have no link; for those the notes name only the record set.</li>
+    <li><b>Land deeds:</b> the Deed workbook (book and page given with each deed); images in the FamilySearch catalog, Essex deeds <a href="https://www.familysearch.org/search/catalog/215486" target="_blank" rel="noopener">215486</a>, Bergen and Passaic deeds <a href="https://www.familysearch.org/search/catalog/479019" target="_blank" rel="noopener">479019</a>.</li>
+    <li><b>Morris marriages:</b> the compiler’s index to the Morris County marriage records, by liber and page; no image links.</li>
+    <li><b>Revolutionary War service notes:</b> Fold3 service records, per the compiler’s sheet; no links recorded.</li>
+  </ul>
+</details>
+<details class="ref" id="howto"><summary>How to read this map</summary>
+  <ul class="notes">
+    <li>Township is the one the record gives for the property. Bloomfield was set off from Newark in 1812, Caldwell from Acquackanonk and Newark in 1798, Livingston in 1813 (it included Roseland), Paterson from Acquackanonk in 1831, and Passaic County from Essex and Bergen in 1837. Before 1798 the Caldwell and Livingston area was the western part of Newark Township.</li>
+    <li>Old Pequannock Township reached from the Pompton River west into the Green Pond and Newfoundland highlands. Hendrick (A), Elias (B) and Simeon (C) all lived in those highlands. That they were one family group is a hypothesis.</li>
+    <li>Hendrick's and Elias's houses stood on land surveyed to Abraham Ogden. They were occupants, not owners of record, as far as these surveys show.</li>
+    <li>Acreage marked † comes from the compiler’s research notes, matched to the deed by date and parties. It was not read from the deed.</li>
+    <li>F 2 31 appears twice: once as Jacob &amp; Polly Kent to Vreeland (Bloomfield, Nutley) and once as Ephraim Vangieson to Jacob Kent (Acquackanonk). One citation is probably wrong.</li>
+    <li>&quot;Currently Entire Map&quot; in the dropdown zooms out to show every county ticked in Filters.</li>
+    <li>The full map also covers Putnam, Westchester, Bronx, New York (Manhattan), Kings (Brooklyn), Queens, Richmond (Staten Island), Nassau and the western edge of Suffolk counties, New York. No records from them are on the map yet. These New York counties, and Rockland and Orange, appear on the map only when ticked in Filters or chosen in the dropdown (each county's towns, as they stood before 1890, are listed under it and placed by their approximate centre); the map then widens to take them in and zooms to the county or counties ticked. Their shorelines, the New York–Connecticut line, the county-name positions and the zoom outlines are drawn from general knowledge, not from a source, and are approximate. Bronx County was formed in 1914 (before that its land was in Westchester, then New York County) and Nassau in 1899 (before that, Queens), so records within this map's 1721–1890 range will name the earlier county. Suffolk lies mostly east of the map edge.</li>
+    <li>The full map also runs north into Rockland and Orange counties, New York, which share the corridor. No records from either county are on the map yet. The New Jersey–New York line, the Hudson above Bergen, the New York town positions and the two county outlines used for zooming are drawn from general knowledge, not from a source, and are approximate.</li>
+    <li>The full map now runs east to the Hudson so that all of Bergen County shows. The Hackensack and Hudson rivers there, and the county outlines used when you select a whole county (present-day county lines, approximate), are drawn from general knowledge, not from a source. Sussex County lies mostly off the map, so selecting it zooms to its records near the map's top-left corner; the far west of Morris is also off the map. No roads, township lines or terrain were added east of the Saddle River.</li>
+    <li>The Westfield and New Providence Kents (Abraham, Nathaniel) are on the map for completeness. Nothing here connects them to the Caldwell–Bloomfield Kents.</li>
+    <li>The year range shows a Morris place only if it has a dated record in those years; each place's list hides entries outside the range.</li>
+    <li>The Swine Field marker is from NJ Supreme Court No. 29971, Parker v. Simon Kent (1766–1770), placed near Swinefield Road and its bridge over the Passaic.</li>
+    <li>Road and township sources: Munsell, <i>History of Morris County</i> (1882), <a href="https://www.usgenwebsites.org/NJMorris/history/munsellhistory/h-chpt11.htm" target="_blank" rel="noopener">ch. 11, turnpikes</a>; <a href="https://morriscountyhistory.org/the-turnpike-era/" target="_blank" rel="noopener">Morris County Historical Society, The Turnpike Era</a>; <a href="https://en.wikipedia.org/wiki/Newark%E2%80%93Pompton_Turnpike" target="_blank" rel="noopener">Newark–Pompton Turnpike</a>; <a href="https://usgenwebsites.org/NJMorris/general_info/forges1816.htm" target="_blank" rel="noopener">Morris forges, 1816</a>; <i>Our Heritage</i>, Livingston (Swinefield Road).</li>
+    <li>Record sources: Genealogy project files <i>deeds/Deeds_for_David_Kent_or_any_E-M2s.md</i>, <i>timelines/Timeline_of_Kent_Essex_Morris_NJ_1746-1820s.md</i>, the Morris deed and court transcriptions under <i>deeds/</i> and <i>court/</i>, and <i>court/Morris_Orphans_Court_1795_Helmer_Kent_estate_division.md</i>. Deed images: Essex Co. deeds, FamilySearch catalog <a href="https://www.familysearch.org/search/catalog/215486" target="_blank" rel="noopener">215486</a>; Bergen and Passaic deeds, catalog <a href="https://www.familysearch.org/search/catalog/479019" target="_blank" rel="noopener">479019</a>.</li>
+  </ul>
+</details>
+<details class="ref" id="grpsec"><summary>Understanding Individual and Family Groups</summary>
+  <p>The records on this page are raw material: names exactly as a clerk wrote them. An <b>individual</b> or a <b>family group</b> is a conclusion built on top of them: &ldquo;these records are about the same man&rdquo;, or &ldquo;these people were a household&rdquo;. The page keeps the two apart. Choosing a person or group in <b>Filters &amp; quick jump</b> never changes a record; it only narrows the list to the records that have been linked to that choice and ringed on the map.</p>
+  <ul class="notes">
+    <li><b>Proven</b> means a record states the connection directly (for example a deed that names the person and the relationship). <b>Probable</b> means the evidence is indirect but points the same way. Every link also carries a one-sentence explanation, shown in the pop-up.</li>
+    <li><b>Rings.</b> A solid ring at a location means at least one Proven record for the selection was made there; a dashed ring means Probable records only. The badge is the number of linked records at that spot. The ring shows where a record was written about, not necessarily where the person lived.</li>
+    <li><b>One name, several men.</b> Kent, Kint and Kindt families repeat given names (several Jacobs, Eliases and Johns). A shared name alone never links a record to a person here.</li>
+  </ul>
+  <details class="ref sub2"><summary>Methodology (how links are made)</summary>
+    <ul class="notes">
+      <li>Links follow the Genealogical Proof Standard: a reasonably thorough search, a citation for each record, analysis of what each record can and cannot show, resolution of conflicting evidence, and a written conclusion. Friends, associates and neighbours (the FAN club) are used to separate men of the same name.</li>
+      <li>A family group lists each member with the documented relationship, its own confidence level and a supporting citation. Relationships are entered by the researcher; nothing is inferred from names, dates or neighbours.</li>
+      <li>An individual may belong to more than one family group (for example the family he was born into and the one he married into).</li>
+      <li>A record&rsquo;s place on the map is the township or lettered place the page already uses for it. County-only records have no marker, so they are counted in the summary but not ringed.</li>
+      <li>Research is kept on the server by the project administrators. Visitors see a profile or family group once an administrator publishes it.</li>
+    </ul>
+  </details>
+</details>
+<details class="ref" id="tersec"><summary>Terrain: mountains and valleys (schematic)</summary>
+  <p class="notes" style="padding-left:0">I had no elevation data or surveyed relief for this map, so the "Terrain" box draws only the named ridges, uplands and valleys that the sources describe. Every outline is approximate, probably off by a few miles, and the on-map shapes are not contours. Switch it on with the "Terrain" box above the map.</p>
+  <table class="ht"><thead><tr><th>Feature</th><th>What the sources say</th><th>On this map</th></tr></thead><tbody>
+  <tr><td><b>Highlands</b></td><td>"Discontinuous rounded ridges separated by deep narrow valleys." Summits to about 1,500 ft (Wawayanda Mtn 1,496 ft, Bearfort Mtn 1,490 ft, Ramapo Mtn 1,171 ft); valleys under 400 to over 800 ft. The boundary with the Piedmont follows the Ramapo Fault southwest from the New York line (NJ Geological Survey).</td><td>Brown tint north and west of a dashed line. <i>Proposed position: I placed the line from town positions, not from a mapped fault trace.</i></td></tr>
+  <tr><td><b>Green Pond and Copperas mountains</b></td><td>Munsell: Green Pond Mtn rises near Newfoundland and runs to Baker's Mill, steep on its west side. Copperas Mtn rises just west of Charlotteburgh, runs about six miles to Denmark, and parallels Green Pond Mtn on the east. Green Pond, at 1,069 ft, lies between them. The Rockaway River crosses the Longwood and Berkshire valleys along the west base of Green Pond Mtn.</td><td>Triangles. Copperas follows this map's older dashed ridge line. Green Pond Mtn sits west of the pond. I could not place Baker's Mill or Denmark, so the southwest ends are approximate.</td></tr>
+  <tr><td><b>Watchung Mountains</b></td><td>First (Orange and Garret Mtn) and Second (Caldwell and Preakness Mtn) run more than 40 miles and generally rise 400 to 500 ft. The Third is discontinuous and includes Hook Mtn and Long Hill (Wikipedia). Munsell: Hook Mtn rises near Pine Brook, runs north about four miles, then bends east. Long Hill is a trap ridge about eleven miles long, from near Chatham southwest through Millington to Liberty Corner.</td><td>First and Second use this map's existing ridge lines. Hook Mtn and Long Hill are drawn from those descriptions.</td></tr>
+  <tr><td><b>Former Lake Passaic basin</b></td><td>At its largest, the glacial lake ran from the base of Preakness Mtn (Wayne) to the north slope of Second Watchung at Liberty Corner, with Third Watchung ridges as islands; it was about 300 ft deep at most. The Great Swamp is a remnant of its Millington stage. Hatfield Swamp, Black Meadows and Great Piece Meadows are remnants of its Totowa stage (Wikipedia). Munsell puts Troy Meadows on the Whippany River near Hanover Neck.</td><td>Pale blue dashed outline for the basin, with the Great Swamp and the Passaic meadows shaded. <i>The outline is rough; the lake level changed through several stages.</i></td></tr>
+  <tr><td><b>New York counties</b></td><td>When New York counties are selected: the Wallkill, Ramapo (New York part), Delaware (by Port Jervis), Croton, Bronx and Saw Mill rivers; the Ramapo Mountains, Hudson Highlands, Palisades, Schunemunk Mountain and Shawangunk Ridge; and the Wallkill and Hudson valleys and the Ramapo Pass.</td><td>Drawn from general knowledge, not from a source. Courses and ridge lines are approximate and may be off by a few miles; they follow the Terrain box (rivers show whenever their county is selected).</td></tr><tr><td><b>Piedmont lowland</b></td><td>A low rolling plain, about 300 to 400 ft at the foot of the Highlands (NJ Geological Survey).</td><td>Everything southeast of the Highlands tint.</td></tr>
+  </tbody></table>
+  <ul class="notes">
+    <li>Not drawn: Schooley's Mountain, German Valley, Succasunna Plains, Mount Paul and the Mendham valley, which Munsell names but which I could not place from the sources.</li>
+    <li>Sources: <a href="https://usgenwebsites.org/NJMorris/history/munsellhistory/h-chpt21.htm">Munsell, History of Morris County, ch. 21</a>; <a href="https://nj.gov/dep/njgs/enviroed/infocirc/provinces.pdf">NJ Geological Survey, Physiographic Provinces</a>; <a href="https://en.wikipedia.org/wiki/Watchung_Mountains">Watchung Mountains</a>; <a href="https://en.wikipedia.org/wiki/Lake_Passaic">Lake Passaic</a> (Wikipedia).</li>
+  </ul>
+</details>
+<details class="ref" id="jlsec"><summary>East Jersey and West Jersey dividing lines</summary>
+  <p class="notes" style="padding-left:0">None of the lines was surveyed to modern coordinates in the sources I found, so every line on the map is approximate. Switch them off with the "East/West Jersey lines" box above the map. Confidence is given for each.</p>
+  <p class="notes" style="padding-left:0"><b>In short:</b> the red line is the <b>proposed</b> 1688 Coxe–Barclay line between East and West Jersey. The East Jersey proprietors disowned it in 1695 and it was rescinded in 1718 (one source says 1719), so it was never a permanent proprietary boundary, although parts of it survive as county boundaries. The dotted line is the Lawrence line of 1743, the one finally accepted as the division.</p>
+  <table class="ht"><thead><tr><th>Line</th><th>Course as the sources describe it</th><th>On this map</th></tr></thead><tbody>
+  <tr><td><b>Quintipartite Deed line</b><br>1676</td><td>A straight line from the Delaware at 41°40′N south to the southernmost point of Little Egg Harbor. It was not surveyed at the time. <i>Documented description.</i></td><td>Not drawn; it lies west of this map.</td></tr>
+  <tr><td><b>Keith line</b><br>1687</td><td>Run by East Jersey's surveyor-general George Keith north-northwest from Little Egg Harbor as far as the South Branch of the Raritan near Three Bridges (Readington Twp.), where he was stopped. West Jersey proprietors held it too far west. <i>Documented description.</i></td><td>Not drawn; it lies west of this map.</td></tr>
+  <tr><td><b>Coxe–Barclay line</b><br>1688</td><td>From the end of the Keith line: down the South Branch of the Raritan, up the North Branch, up the Lamington (Black) River, a straight line to the head of the Passaic, then the Pompton and Pequannock Rivers up to 41°N, then due east to the Hudson. Some sources instead carry it up the Pequannock to its head and then northeast along today's eastern Sussex boundary. It survives as the eastern boundaries of Morris and Sussex counties and the northern boundary of Somerset. The East Jersey proprietors disowned it in 1695 and it was rescinded in 1718 (one source says 1719). <i>Probable course; the waypoints are from the sources and the river lines are this map's schematic ones.</i></td><td>Solid line: Pompton and Pequannock Rivers up to 41°N, then due east. Dashed line: the Passaic from its head to the Pompton, which the sources imply but do not state. Faint dotted line: the alternative reading up the Pequannock. The stretch from the Lamington River to the head of the Passaic is off the map to the southwest.</td></tr>
+  <tr><td><b>Lawrence line</b><br>1743</td><td>John Lawrence's survey of the 1676 straight line from the Delaware to the south end of Little Egg Harbor. The NJ Supreme Court adopted it in 1855, and Munsell says it was "finally settled upon as the true one" and runs through Budd's Lake. NJ Geological Survey Bulletin 67 says it had no effect on county boundaries. <i>Proposed position: I drew a straight line from Budd's Lake (Munsell) toward Little Egg Harbor. Its true position could differ by a few miles, and Munsell's other remark that it touched only the Wallkill headwaters does not fit it well.</i></td><td>Dashed line along the western edge. East of it is East Jersey.</td></tr>
+  <tr><td><b>Thornton line</b> c. 1696<br><b>Mahacomack line</b> 1775</td><td>Named in the sources, but I found no waypoints for either. The Mahacomack line was proposed by West Jersey and never adopted.</td><td>Not drawn.</td></tr>
+  </tbody></table>
+  <ul class="notes" style="margin-top:10px">
+    <li>On the 1688 course, everything on this map north and west of the Passaic, Pompton and Pequannock Rivers fell on the <b>West Jersey</b> side (the line gave roughly present Morris and Sussex counties to West Jersey). On the 1743 Lawrence line, which was the one finally accepted, all of it is <b>East Jersey</b>. Until after the Revolution the West Jersey proprietors still claimed the Coxe–Barclay line and the East Jersey proprietors the Keith line extended (Munsell).</li>
+    <li>The shading and the orange township names show the <b>West Jersey side on the 1688 course only</b>. On the 1743 Lawrence line none of it would be West Jersey. The stretch from the head of the Passaic to the Lamington River is off the map, so Chester and Mendham are shaded West Jersey on the assumption that it lies south of them. That is an assumption, supported only by those two townships being in Morris and not Somerset County.</li>
+    <li>The 1707 act setting Essex's bounds ran "the said division line to Pequaneck River, where it meets Passaick River". Munsell says this put part of Morris County in Essex and part in Burlington, and that the line meant was Coxe–Barclay.</li>
+    <li><b>Unresolved:</b> Munsell also says the Coxe–Barclay line "passed about five miles north of Morristown". That does not fit the Passaic–Pompton–Pequannock waypoints above, so I did not draw it. Whether a particular Kent tract was granted by East Jersey or West Jersey proprietors is a question for its chain of title. I have not tested that for any Kent tract.</li>
+    <li>To pin the lines down, the surveyor's papers at the New Jersey Historical Society (Guide to the John Lawrence Surveyor Papers, MG 258) are the next place to look.</li>
+  </ul>
+  <p class="notes" style="padding-left:0;margin-top:10px">Sources: <a href="https://westjersey.org/wj_line.htm" target="_blank" rel="noopener">Where was the West Jersey/East Jersey line?</a> (westjersey.org); <a href="https://en.wikipedia.org/wiki/Quintipartite_Deed" target="_blank" rel="noopener">Quintipartite Deed</a> and <a href="https://en.wikipedia.org/wiki/Coxe%E2%80%93Barclay_Line" target="_blank" rel="noopener">Coxe–Barclay Line</a> (Wikipedia); <a href="https://www.njstatelib.org/exhibits/nj250/1776era/the-jerseys/" target="_blank" rel="noopener">NJ State Library, The Jerseys</a>; <a href="https://usgenwebsites.org/NJMorris/history/munsellhistory/h-chpt01.htm" target="_blank" rel="noopener">Munsell, History of Morris County, ch. 1</a>; <a href="https://www.nj.gov/dep/njgs/enviroed/oldpubs/bulletin67.pdf" target="_blank" rel="noopener">NJ Geological Survey Bulletin 67, The Story of New Jersey's Civil Boundaries</a>; <a href="https://www.nj.gov/state/archives/pdf/proprietors.pdf" target="_blank" rel="noopener">Klett, Using the Records of the East and West Jersey Proprietors</a>; <a href="https://jerseyhistory.org/mg0258" target="_blank" rel="noopener">John Lawrence Surveyor Papers, MG 258</a>.</p>
+</details>
+<details class="ref" id="histsec"><summary>Townships and places: old names, changes and present names</summary>
+  <h3 class="sub">Essex, Passaic, Bergen, Union and Sussex</h3>
+  <table class="ht"><thead><tr><th>Place</th><th>Earlier names, changes and dates</th><th>Now</th></tr></thead><tbody><tr><td><b>Newark (Newark Twp.)</b></td><td>Settled in 1666 by Connecticut families under Robert Treat, who named it <b>New Ark</b>. Its western lands were split off later: Caldwell Twp. in 1798 and Bloomfield Twp. in 1812.</td><td>Newark, Essex Co.</td></tr><tr><td><b>Caldwell Twp. (Horseneck)</b></td><td>Part of the <b>Horseneck Tract</b>, bought from the Lenape in 1701 (the Livingston page says 1702). The Horseneck church was renamed <b>Caldwell</b> in 1787 for Rev. James Caldwell. <b>Caldwell Twp.</b> dates from 1798: the westernmost part of Newark Twp. (another page says it was set off from Acquackanonk on 16 Feb 1798). Livingston took land from it in 1813.</td><td>Renamed <b>Fairfield Twp.</b> in 1963. The old Horseneck area is now Caldwell, West Caldwell, North Caldwell, Verona, Cedar Grove, Essex Fells and Roseland, with parts of Fairfield, Livingston and West Orange.</td></tr><tr><td><b>Livingston Twp.</b></td><td>Incorporated 5 Feb 1813 from Caldwell Twp. and Springfield Twp.; named for Gov. William Livingston. The land was part of the Horseneck Tract. The 1811 petition named the hamlets Centerville, Cheapside, Morehousetown, Northfield, Squiretown, Teedtown and Washington Place. Fairmount was set off in 1862 (now West Orange) and Roseland, the old Centerville, in 1908.</td><td>Livingston Twp., Essex Co.</td></tr><tr><td><b>Bloomfield Twp.</b></td><td>Incorporated 23 Mar 1812 from Newark Twp.; named for Gov. Joseph Bloomfield. Early neighbourhoods: Speertown, Stone House Plains, Second River, Cranetown and Watsessing. Set off later: Belleville 1839, Montclair 1868, Woodside 1869, Glen Ridge 1895.</td><td>Bloomfield Twp., Essex Co.</td></tr><tr><td><b>Cranetown</b></td><td>Named for the Crane family, whose home dates from 1694. Called <b>West Bloomfield</b> after the 1812 township was made. The name <b>Montclair</b> was adopted by 1860, and the Township of Montclair was created in 1868.</td><td>South Montclair</td></tr><tr><td><b>Speertown</b></td><td>A Dutch farming community: Newark, then Bloomfield Twp. (1812), then Montclair Twp. (1868).</td><td>Upper Montclair</td></tr><tr><td><b>Stone House Plains</b></td><td>A neighbourhood of Bloomfield Twp., renamed <b>Brookdale</b> in 1873.</td><td>Brookdale, Bloomfield</td></tr><tr><td><b>Watsessing</b></td><td>An early neighbourhood of Bloomfield Twp.</td><td>Watsessing, Bloomfield</td></tr><tr><td><b>Second River</b></td><td>Also called <b>Washington</b>. Renamed <b>Belleville</b> in 1797. Belleville Twp. was incorporated 8 Apr 1839 from Bloomfield. Franklin Twp. was set off from it on 18 Feb 1874 (see Nutley).</td><td>Belleville (a town 1910, a township since 1981)</td></tr><tr><td><b>Nutley</b></td><td>Franklinville grew up here. <b>Franklin Twp.</b> was incorporated 18 Feb 1874 from Belleville Twp. and replaced by the <b>Town of Nutley</b> on 5 Mar 1902. The name comes from the Satterthwaite estate of 1844.</td><td>Nutley (a township since 1981)</td></tr><tr><td><b>Acquackanonk Twp. and Landing</b></td><td>Formed 31 Oct 1693 (the Acquackanonk Patent). Also written Achquegnonck, Ackquekenon (1679) and Achquakanonk. Incorporated 1798. In Essex Co. until Passaic Co. was created on 7 Feb 1837. Set off: Caldwell 1798, Paterson Twp. 11 Apr 1831, Little Falls 1868, Passaic village 1869 (independent 1871). The township ended on 26 Apr 1917 when Clifton was created.</td><td>Passaic (the Landing), Paterson, Clifton and Little Falls, Passaic Co.</td></tr><tr><td><b>Saddle River Twp. and Manchester</b></td><td>Saddle River Twp. was in Bergen Co. <b>Manchester Twp.</b> was formed from it on 7 Feb 1837, the day Passaic Co. was created, and ended on 8 Apr 1908 when Haledon was made a borough.</td><td>Haledon, North Haledon, Prospect Park, Hawthorne, Totowa and part of Paterson</td></tr><tr><td><b>Westfield Twp.</b></td><td>One of the towns made from Elizabethtown's lands in 1794. In Essex Co. until Union Co. was set off about 1857.</td><td>Westfield, Union Co.</td></tr><tr><td><b>New Providence Twp.</b></td><td>First called <b>Turkey</b> or Turkey Town. Renamed New Providence after a church balcony fell in 1759 without serious injury (no exact date given). Springfield Twp. was formed 14 Apr 1794 and included it. New Providence Twp. was formed 8 Nov 1809. Summit left in 1869, New Providence became a borough in 1899, and the township was renamed <b>Berkeley Heights</b> on 6 Nov 1951.</td><td>New Providence Borough and Berkeley Heights, Union Co.</td></tr><tr><td><b>Hardyston Twp. (Sussex)</b></td><td>Set off from Newton Twp. by royal charter on 25 Feb 1762; named for Gov. Josiah Hardy and first spelled <b>Hardiston</b>. Incorporated 1798. Later set off: Vernon 1793, Sparta 1845, Franklin 1913, Hamburg 1920.</td><td>Hardyston Twp., Sussex Co.</td></tr><tr><td><b>Counties</b></td><td>Essex was one of four counties made in 1683 (Bergen, Essex, Middlesex, Monmouth). Passaic Co. was created in 1837 from parts of Bergen and Essex, and Union Co. about 1857 from Essex. Before 1857 the Westfield and New Providence records are in Essex.</td><td>—</td></tr></tbody></table>
+  <h3 class="sub">Morris County</h3>
+  <table class="ht"><thead><tr><th>Place</th><th>Earlier names, changes and dates</th><th>Now</th></tr></thead><tbody><tr><td><b>Morris County</b></td><td>Created 15 Mar 1739 from Hunterdon Co., named for Gov. Lewis Morris. Townships incorporated 25 Mar 1740: Hanover, Morris and Pequannock (and Greenwich, now in Warren Co.). Roxbury followed in December 1740. Several were incorporated again under the Township Act of 21 Feb 1798.</td><td>—</td></tr><tr><td><b>Pequannock Twp.</b></td><td>A precinct called <b>Poquanick</b> by 1720; <b>Poquanock Twp.</b> on 25 Mar 1740, then the county's largest (about 176 sq mi); <b>Pequanack</b> in 1798. Set off: Jefferson 1804, Rockaway Twp. 1844, Boonton and Montville 1867, Butler 1901, Kinnelon and Lincoln Park 1922, Riverdale 1923.</td><td>Pequannock Twp. (Pompton Plains is its main community)</td></tr><tr><td><b>Hanover Twp.</b></td><td>Formed 1720 and incorporated 25 Mar 1740, at first covering most of Morris Co. Set off: Mendham 1749, Chatham 1806, Rockaway Twp. 1844, Boonton town 1866, Mountain Lakes 1924, Morris Plains 1926, East Hanover and Parsippany-Troy Hills 1928.</td><td>Hanover Twp. (Whippany is a community in it)</td></tr><tr><td><b>Morris Twp.</b></td><td>Formed 25 Mar 1740. Set off: Roxbury 24 Dec 1740, Mendham 1749, Chatham 1806, Morristown 1865 (fully independent 1895), Passaic Twp. 1866.</td><td>Morris Twp.; Passaic Twp. is now Long Hill Twp.</td></tr><tr><td><b>Roxbury Twp.</b></td><td>Formed 24 Dec 1740 from Morris Twp. Set off: Mendham 1749, Washington 1798, Chester 1799, Jefferson 1804, Mount Olive 1871.</td><td>Roxbury Twp.</td></tr><tr><td><b>Mendham Twp.</b></td><td>Formed 29 Mar 1749 from Hanover, Morris and Roxbury. Randolph was taken from it in 1806 and Mendham Borough made in 1906.</td><td>Mendham Twp. and Mendham Borough</td></tr><tr><td><b>Jefferson Twp.</b></td><td>Set off 11 Feb 1804; both the Roxbury and Pequannock histories list it as one of their set-offs.</td><td>Jefferson Twp.</td></tr><tr><td><b>Randolph Twp.</b></td><td>Incorporated 1 Jan 1806 from Mendham Twp. Named for Hartshorne Fitz-Randolph, who bought 1,000 acres at Mine Hill in 1753. Dover, Port Oram (now Wharton) and Mine Hill separated later.</td><td>Randolph Twp.</td></tr><tr><td><b>Chester Twp.</b></td><td>Created 1 Apr 1799 from Roxbury and Washington Twps.; named for a place in England. Chester Borough was set off in 1930.</td><td>Chester Twp. and Chester Borough</td></tr><tr><td><b>Chatham Twp.</b></td><td>Set off 12 Feb 1806 from Hanover and Morris Twps.</td><td>Chatham Twp.</td></tr><tr><td><b>Rockaway Twp.</b></td><td>Set off 8 Apr 1844 from Hanover and Pequannock. Before then the Rockaway village and Beaver Brook areas were in Hanover and Pequannock.</td><td>Rockaway Twp.</td></tr></tbody></table>
+  <p class="notes" style="padding-left:0;margin-top:10px">Sources: <a href="https://montclair.hosted.civiclive.com/montclair150/a_brief_history_of_montclair" target="_blank" rel="noopener">Montclair history</a>; <a href="https://en.wikipedia.org/wiki/Horseneck_Tract" target="_blank" rel="noopener">Horseneck Tract</a>; <a href="https://en.wikipedia.org/wiki/Bloomfield,_New_Jersey" target="_blank" rel="noopener">Bloomfield</a>; <a href="https://en.wikipedia.org/wiki/Nutley,_New_Jersey" target="_blank" rel="noopener">Nutley</a>; <a href="https://wikiwand.com/en/articles/Belleville,_New_Jersey" target="_blank" rel="noopener">Belleville</a>; <a href="https://wikiwand.com/en/articles/Glen_Ridge,_New_Jersey" target="_blank" rel="noopener">Glen Ridge (Newark, 1666)</a>; <a href="https://www.wikiwand.com/en/articles/Livingston,_NJ" target="_blank" rel="noopener">Livingston</a>; <a href="https://en.wikipedia.org/wiki/Acquackanonk_Township,_New_Jersey" target="_blank" rel="noopener">Acquackanonk Twp.</a>; <a href="https://www.usgenwebsites.org/NJPassaic/boundaries.html" target="_blank" rel="noopener">Passaic Co. boundary history</a>; <a href="https://en.wikipedia.org/wiki/Manchester_Township,_Passaic_County,_New_Jersey" target="_blank" rel="noopener">Manchester Twp.</a>; <a href="https://en.wikipedia.org/wiki/New_Providence,_New_Jersey" target="_blank" rel="noopener">New Providence</a>; <a href="https://ucnj.org/county-history/" target="_blank" rel="noopener">Union County history</a>; <a href="https://en.wikipedia.org/wiki/Hardyston_Township,_New_Jersey" target="_blank" rel="noopener">Hardyston Twp.</a>; <a href="https://morriscountyhistory.org/the-making-of-morris/" target="_blank" rel="noopener">The Making of Morris</a>; <a href="https://en.wikipedia.org/wiki/Pequannock_Township,_New_Jersey" target="_blank" rel="noopener">Pequannock Twp.</a>; <a href="https://en.wikipedia.org/wiki/Hanover_Township,_New_Jersey" target="_blank" rel="noopener">Hanover Twp.</a>; <a href="https://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq.ipfs.4everland.io/wiki/Morris_Township%2C_New_Jersey.html" target="_blank" rel="noopener">Morris Twp. (mirror)</a>; <a href="https://www.wikiwand.com/en/articles/Roxbury,_New_Jersey" target="_blank" rel="noopener">Roxbury</a>; <a href="https://wikiwand.com/en/articles/Mendham_Township,_New_Jersey" target="_blank" rel="noopener">Mendham Twp.</a>; <a href="https://www.doc.surf/wiki/randolph-new-jersey" target="_blank" rel="noopener">Randolph (mirror)</a>; <a href="https://wikiwand.com/en/articles/Chester,_NJ" target="_blank" rel="noopener">Chester</a>. Dates are as those pages give them; where two pages differ, both are noted. Several are Wikipedia pages or mirrors of them.</p>
+</details>
+<details class="ref" id="checks"><summary>What was checked and corrected when the two maps were combined</summary>
+  <ul class="notes">
+    <li><b>Beaver Brook and Burnt Meadow.</b> The Essex map still showed them near Pompton Plains. They are now where the Morris map had them: Helmer Kent's Beaver Brook plantation (D) between Rockaway and Denville, and Hendrick Kent's house (A) at the head of Burnt Meadow Brook below Green Pond. The eight Morris deeds from the deed workbook now appear under their lettered Morris entries instead of as separate numbered markers.</li>
+    <li><b>Morris Turnpike (1801).</b> It ran Chatham, Madison, Morristown, Walnut Grove, Succasunna, Drakesville, Stanhope. The road through Mendham and Chester that the Morris map called the Morris Turnpike was the Washington Turnpike (1806).</li>
+    <li><b>Newark &amp; Mount Pleasant Turnpike (1806).</b> It entered Morris at Cook's Bridge and ran by Whippany and Littleton to join the Union Turnpike near Dover. It did not pass through Denville and Rockaway. That road was the Parsippany &amp; Rockaway Turnpike (1809): Pine Brook, Troy, Parsippany, Denville, Rockaway, Mount Pleasant. It is now drawn.</li>
+    <li><b>Newark &amp; Pompton Turnpike (1806).</b> The main line ran Bloomfield, Montclair, Verona, Cedar Grove, Singac, Pompton Plains. Bloomfield Avenue through Caldwell to the Pine Brook toll gate was its branch.</li>
+    <li><b>Paterson &amp; Hamburg Turnpike (1806).</b> Now drawn in full from Acquackanonk Landing through Paterson and Pompton, up the Pequannock valley to Newfoundland.</li>
+    <li><b>Union Turnpike (1804).</b> Morristown, Dover, Mount Pleasant, Berkshire Valley, toward Sparta. Its line between Morristown and Dover is a general route only.</li>
+    <li><b>First and Second Mountain</b> were drawn too far east. They, and the township lines that follow them (Caldwell–Bloomfield, Orange–Livingston), have moved west. The Second Mountain marker moved onto the ridge.</li>
+    <li><b>Markers moved to the correct side of a river or line:</b> Manchester (north bank of the Passaic, opposite Paterson), the east-bank Saddle River Township lot, the Acquackanonk woodlots, the Long Hill lot (M), and Isaac Kent's Passaic-bank lot (E, Morris side).</li>
+    <li><b>Franklin Forge lot (G)</b> moved north to Den Brook at Franklin, in present Denville. The 1791 deed runs "towards Denbrook" next to Isaac Canfield, and an 1816 list has Isaac Canfield's forge at Franklin.</li>
+    <li><b>The "Kent place" (C)</b> moved to the lower (outlet) end of Green Pond, which is drawn in its real northeast–southwest position.</li>
+    <li><b>Rivers.</b> The Passaic's loop around Paterson, its course from Two Bridges to Chatham, the Rockaway, Whippany, Pompton and Pequannock rivers and Beaver, Den, Green Pond and Burnt Meadow brooks were redrawn to one consistent course.</li>
+    <li><b>Morris township lines (c. 1830)</b> were redrawn: the Rockaway River as the Pequannock–Hanover line, Jefferson west of Green Pond, and Randolph, Roxbury, Morris, Chatham, Mendham and Chester. They are approximate and not from a survey. Rockaway Township was not formed until 1844.</li>
+  </ul>
+</details>
+</section>
+</div>
+
+<div id="tip" role="tooltip"></div>
+<div id="pop" role="dialog" aria-modal="false" aria-labelledby="poph" hidden><div class="popin"><button type="button" id="popz" aria-pressed="false" aria-label="Expand the window">⤢ Expand</button><button type="button" id="popx" aria-label="Close">×</button><h3 id="poph"></h3><div id="popb"></div><div class="popf"><button type="button" class="chip" id="popgo">Open the full list</button><button type="button" class="chip" id="popc">Close</button></div></div></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+</body></html>

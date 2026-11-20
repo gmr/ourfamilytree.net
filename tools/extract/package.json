@@ -1,0 +1,13 @@
+{
+  "name": "oft-extract",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "split": "node split.mjs",
+    "records": "node records.mjs"
+  },
+  "devDependencies": {
+    "acorn": "8.14.0",
+    "playwright": "1.49.1"
+  }
+}

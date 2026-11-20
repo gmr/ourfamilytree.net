@@ -1,0 +1,7 @@
+target
+.git
+.env
+plans
+data
+tools
+**/node_modules

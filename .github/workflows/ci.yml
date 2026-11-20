@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: fmt, clippy, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --workspace
+
+  e2e:
+    name: Seed, parity and MCP smoke test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: oft
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: oft
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U oft" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://oft:ci@localhost:5432/oft
+      BASE_URL: http://localhost:8080
+      DEV_LOGIN_EMAIL: ci@localhost
+      PW_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - run: cargo build -p oft-api
+      - run: ./target/debug/oft-api import-seed
+      - run: ./target/debug/oft-api user-add --email ci@localhost --role admin
+      - run: ./target/debug/oft-api serve &
+      - run: for i in $(seq 1 30); do curl -sf localhost:8080/health && break; sleep 1; done
+      - run: cd tools/extract && npm ci && npx playwright install --with-deps chromium
+      - run: mkdir -p data && cd tools/extract && node records.mjs http://localhost:8080/ ../../data/records-site.json
+      - run: python3 tools/parity.py seed/records.json data/records-site.json
+      - run: python3 tools/mcp_smoke.py

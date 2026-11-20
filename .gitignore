@@ -1,0 +1,19 @@
+# Rust
+/target/
+
+# Environment
+.env
+
+# Node (extraction tool only)
+node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# PRD, design and the source page (kept locally, as in kentfamilygene.com)
+plans/
+
+# Scratch output of the extraction and parity scripts
+data/

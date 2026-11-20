@@ -1,0 +1,15 @@
+# Local development database only. Production uses DigitalOcean Managed PostgreSQL.
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5442:5432"
+    environment:
+      POSTGRES_USER: oft
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: oft
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:

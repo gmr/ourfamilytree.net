@@ -1,0 +1,23 @@
+# DigitalOcean droplet. The database is DigitalOcean Managed PostgreSQL (see .env.example and README).
+services:
+  app:
+    image: ghcr.io/gmr/ourfamilytree.net:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./certs:/certs:ro
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
