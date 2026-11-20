@@ -6,8 +6,8 @@ alerts:
 - rule: DOMAIN_FAILED
 databases:
 - cluster_name: ourfamilytree
-  db_name: defaultdb
-  db_user: doadmin
+  db_name: oft
+  db_user: oft
   engine: PG
   name: ourfamilytree
   production: true

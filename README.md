@@ -20,7 +20,7 @@ Connect an MCP client to `http://localhost:8080/mcp`. For example, in Claude Cod
 The app is described by `.do/app.yaml`. App Platform builds the Dockerfile from `main` on every
 push, runs `oft-api import-seed` before each deploy, and serves HTTPS for `ourfamilytree.net`.
 
-1. Managed Postgres cluster `ourfamilytree` (the app uses its `defaultdb` as `doadmin`).
+1. Managed Postgres cluster `ourfamilytree`, database `oft` owned by user `oft` (`ALTER DATABASE oft OWNER TO oft; ALTER SCHEMA public OWNER TO oft;` as `doadmin`, in database `oft`).
 2. Google Cloud console: OAuth client of type "Web application" with the redirect URIs
    `https://ourfamilytree-4yskv.ondigitalocean.app/oauth/google/callback` and
    `https://ourfamilytree.net/oauth/google/callback`.
