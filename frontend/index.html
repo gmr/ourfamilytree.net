@@ -1,7 +1,8 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Kent and Kint Records Map</title>
+<script>try{var t=localStorage.getItem("oft-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
 /* Layout: surveyor's sheet — map with view + year controls on top, place register beside it; stacks on phones */
 :root{
@@ -362,15 +363,139 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
 #map .rsbn{font:700 9px var(--f-sans);fill:#fff;pointer-events:none}
 .rspoplist{list-style:none;padding:0;margin:6px 0}.rspoplist li{padding:7px 0;border-top:1px solid var(--rule)}.rspoplist .ex{color:var(--muted)}
 .lgring{vertical-align:-6px;margin-right:4px}
+
+/* ===== ourfamilytree.net: layout and type from the site mockup (plans/design) ===== */
+:root{--f-head:'Space Grotesk','Inter',sans-serif;--field:#cbd5e1;--panel-alt:#f1f5f9;--shared-bg:#fdf8ee;--shared-ink:#5c4513;--link:#9b1c1c;--link-hover:#7f1d1d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--field:#3f4d47;--panel-alt:#222c28;--shared-bg:#29261b;--shared-ink:#e3cfa0;--link:#f08a96;--link-hover:#f6b0b8}}
+:root[data-theme="dark"]{--field:#3f4d47;--panel-alt:#222c28;--shared-bg:#29261b;--shared-ink:#e3cfa0;--link:#f08a96;--link-hover:#f6b0b8}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-sans)}
+body a{color:var(--link)}body a:hover{color:var(--link-hover)}
+body .wrap{max-width:1360px;padding:0 32px 48px;box-sizing:border-box;gap:20px}
+body .ofhead{padding:28px 0 0}
+body .ofhead .eyebrow{font:600 12px/1.3 var(--f-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--sub-ink);margin:0}
+body .ofhead h1{margin:4px 0 0;font:700 34px/1.15 var(--f-head);color:var(--ink);letter-spacing:0}
+body .ofhead .lede{margin:6px 0 0;font-size:15px;line-height:1.5;color:var(--sub-ink);max-width:720px}
+.notice{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--sub-ink)}
+.notice svg{flex:none;width:20px;height:20px;margin-top:1px}.notice p{flex:1;min-width:0;margin:0;font-size:14px;line-height:1.5;color:var(--body-ink)}
+body .howbox{margin:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);border-left:1px solid var(--rule)}
+body h2,body h3,body .fh{font-family:var(--f-head)}
+body nav.toc{display:flex;flex-wrap:wrap;gap:4px;padding:0;border:0;border-bottom:1px solid var(--rule);background:none;position:static}
+body nav.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;font:600 14px var(--f-sans);color:var(--sub-ink);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px;border-radius:0;background:none}
+body nav.toc a:first-child,body nav.toc a:hover{color:var(--ink);border-bottom-color:var(--accent)}
+/* control row: view, jump to place, individual / family group */
+.ctlrow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctll,body .ctlrow .arrl{font:600 12px var(--f-sans);color:var(--sub-ink);letter-spacing:0;margin:0}
+.vseg{display:inline-flex;border:1px solid var(--field);border-radius:8px;overflow:hidden;background:var(--paper)}
+.vseg button{min-height:44px;padding:0 16px;border:0;border-left:1px solid var(--field);background:var(--paper);color:var(--ink);font:500 14px var(--f-sans);cursor:pointer}
+.vseg button:first-child{border-left:0}
+.vseg button[aria-pressed=true]{background:var(--ink);color:var(--paper);font-weight:600}
+.ctljump{display:contents}
+body .ctlrow .tfbar{display:grid;grid-template-columns:1fr auto auto;gap:6px 8px;align-items:center;margin:0;flex:1 1 280px;max-width:420px}
+body .ctlrow .tfbar .arrl{grid-column:1/-1}
+body .ctlrow .rsselbar{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+body .ctlrow select,body .ctlrow input[type=search]{min-height:44px;padding:0 12px;border:1px solid var(--field);border-radius:8px;background:var(--paper);color:var(--ink);font:14px var(--f-sans);min-width:0;width:100%;box-sizing:border-box}
+body .ctlrow .chip{min-height:44px;min-width:44px;border-radius:8px;border-color:var(--field);background:var(--paper)}
+.fbtn{display:none}
+body .rscard{border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:12px;background:var(--paper);padding:16px 20px;margin:0}
+/* sidebar filters beside the map */
+.layout{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+body aside#filters{flex:1 1 260px;max-width:300px;min-width:240px;display:flex;flex-direction:column;gap:20px;padding:20px;border:1px solid var(--rule);border-radius:12px;background:var(--paper);box-sizing:border-box;position:static}
+.mainc{flex:3 1 560px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.fgrp h2{margin:0 0 10px;font:700 13px var(--f-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--sub-ink)}
+.fgrp .frow{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:0;font-size:14px}
+.flist{display:flex;flex-direction:column;gap:2px}
+.flist .frow{gap:2px}
+body .flist label.ck{display:flex;align-items:center;gap:10px;min-height:36px;font:14px var(--f-sans);color:var(--ink)}
+body aside#filters input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--ink);flex:none}
+.flist .dot{width:10px;height:10px;border-radius:5px;flex:none;display:inline-block}
+body aside#filters .yr{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+body aside#filters .yr .arrl,body aside#filters .yr label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+body aside#filters .fgrp .frow,body aside#filters .seg,body aside#filters #nyrow{align-items:stretch;justify-content:flex-start;text-align:left}
+body aside#filters label.ck,body aside#filters #cbtns label,body aside#filters details.tf summary{justify-content:flex-start;text-align:left;margin:0;padding:0}
+body aside#filters #nybox,body aside#filters #nybox>*{display:flex;justify-content:flex-start;margin:0}
+body aside#filters input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+body aside#filters output{font:600 15px var(--f-sans)}
+body aside#filters .seg{flex-direction:column;align-items:stretch;gap:2px}
+body aside#filters .seg>.arrl,body aside#filters #nyrow>.arrl:first-child,body aside#filters .fbar{display:none}
+body aside#filters #cbtns label,body aside#filters #cbtns button{display:flex;align-items:center;gap:10px;min-height:36px;font:14px var(--f-sans)}
+body aside#filters #nyrow{gap:8px}
+body aside#filters details.tf summary{font:600 14px var(--f-sans);min-height:36px;display:flex;align-items:center;gap:6px;cursor:pointer}
+body aside#filters .lb-cols{max-height:320px;overflow:auto}
+/* map */
+body #mapsec{border-radius:12px;padding:0;border:0;background:none;display:flex;flex-direction:column;gap:12px}
+body .mapbox{border:1px solid var(--rule);border-radius:12px;background:var(--paper);overflow:hidden}
+body #map{display:block}
+body .zbar{position:absolute;right:12px;top:12px;z-index:3;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:60%;background:none;border:0;padding:0;box-shadow:none}
+body .zbar button{min-width:44px;min-height:44px;border:1px solid var(--field);border-radius:8px;background:var(--paper);color:var(--ink);font:600 14px var(--f-sans)}
+body .zbar output{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid var(--field);border-radius:8px;background:var(--paper);font:600 12px var(--f-sans)}
+body #zmsg{left:12px;top:12px;right:auto;transform:none;padding:6px 10px;border-radius:8px;background:var(--paper);border:1px solid var(--rule);font-size:12px;color:var(--body-ink)}
+.lstrip{display:flex;flex-wrap:wrap;gap:8px 24px;padding:12px 16px;border:1px solid var(--rule);border-radius:12px;background:var(--paper);font-size:13px;color:var(--body-ink)}
+.lstrip span{display:inline-flex;align-items:center;gap:8px}
+.lstrip .dot{width:12px;height:12px;border-radius:6px;display:inline-block}
+.lstrip .ring{width:16px;height:16px;border-radius:8px;border:2px solid var(--ink);box-sizing:border-box;display:inline-block}
+.lstrip .sqk{width:12px;height:12px;border-radius:2px;background:var(--twp);display:inline-block}
+body .cmbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border:1px solid var(--rule);border-radius:12px;background:var(--paper);margin:0}
+body .cmbar .cmlab{font:600 13px var(--f-sans);color:var(--body-ink)}
+body .cmbar .cmb{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid var(--field);border-radius:8px;background:var(--paper);font:500 14px var(--f-sans);color:var(--ink)}
+body .cmbar .cmb .tmk.sq{min-width:28px;padding:2px 6px;border-radius:4px;background:var(--ink);color:var(--paper);font:700 12px var(--f-sans);border:0;box-sizing:border-box;text-align:center}
+body .legd{border-radius:12px;border-color:var(--rule);padding:10px 16px;margin:0}
+body .mainc>.grid>.sheet,body .mainc .sheet{border-radius:12px}
+/* records */
+body #records{border:0;background:none;padding:0}
+body #records>h2{font:600 24px var(--f-head);margin:0 0 4px}
+body #records details:not(.shblk)>summary{background:var(--panel-alt);padding:12px 20px;border:1px solid var(--rule);border-radius:12px;font:700 16px var(--f-sans)}
+body #records details[open]:not(.shblk)>summary{border-radius:12px 12px 0 0}
+body #records details:not(.shblk)>.twb{border:1px solid var(--rule);border-top:0;border-radius:0 0 12px 12px;background:var(--paper);padding:12px 20px}
+body #records details{margin:0 0 12px}
+body .twt th{text-align:left;color:var(--sub-ink);font:600 12px var(--f-sans);letter-spacing:.04em;text-transform:uppercase;padding:10px 12px}
+body .twt td{padding:12px;border-top:1px solid var(--rule);vertical-align:top;line-height:1.5}
+body .twt td.y{font-weight:700}
+body #records details.shblk{background:var(--shared-bg);border:1px solid var(--rule);border-left:1px solid var(--rule);border-radius:12px;padding:0!important;color:var(--shared-ink)}
+body #records details.shblk>summary{padding:16px 20px;font:700 15px var(--f-sans);color:var(--shared-ink)}
+body #records details.shblk>.twb{padding:0 20px 16px}
+body #records .sub{font:600 18px var(--f-head);margin:20px 0 10px}
+/* phone (mockup board 3): filters behind a button, map controls on the map */
+@media (max-width:720px){
+  body .wrap{padding:0 16px 32px;gap:14px}
+  body .ofhead{padding-top:18px}
+  body .ofhead h1{font-size:24px}
+  body .ofhead .lede{display:none}
+  .ctl{flex:1 1 100%}
+  .vseg{display:flex}.vseg button{flex:1;padding:0 6px;font-size:13px}
+  body .ctlrow .tfbar{flex:1 1 100%;max-width:none}
+  .fbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border:1px solid var(--field);border-radius:8px;background:var(--paper);font:600 14px var(--f-sans);color:var(--ink);flex:1 1 100%}
+  body aside#filters{display:none;max-width:none;flex-basis:100%}
+  body.fopen aside#filters{display:flex}
+  .mainc{flex-basis:100%}
+  body .zbar{max-width:none;left:auto;flex-direction:column}
+  body .zbar #pl,body .zbar #pr,body .zbar #pu,body .zbar #pd,body .zbar #zlvl{display:none}
+  body .zbar{top:8px;right:8px;gap:4px}body .zbar button{min-width:36px;min-height:36px;font-size:13px}
+  body #pop{align-items:flex-end;padding:0}
+  body #pop>*{border-radius:16px 16px 0 0;max-height:80vh;width:100%;max-width:none}
+}
+/* records tables: full width on wide screens (scroll sideways on phones) */
+@media (min-width:721px){body .twt{display:table;width:100%}}
+/* citations wrap (in v114 one long citation stretched every table past the page) */
+body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhere;min-width:9em;width:22%}
+/* theme switch */
+.ofhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.thm{display:inline-flex;border:1px solid var(--field);border-radius:8px;overflow:hidden;background:var(--paper)}
+.thm button{min-height:36px;padding:0 12px;border:0;border-left:1px solid var(--field);background:var(--paper);color:var(--ink);font:500 13px var(--f-sans);cursor:pointer}
+.thm button:first-child{border-left:0}
+.thm button[aria-pressed=true]{background:var(--ink);color:var(--paper);font-weight:600}
 </style>
 
 <div class="wrap">
-<header>
-  <div class="eyebrow">Kent family research / Historical records</div>
-  <h1>Explore Kent &amp; Kint Records in Northern New Jersey</h1>
-  <p>Explore land, tax, census, military, court and family records across six New Jersey counties, 1721 to 1890.</p>
-  <p><b>Research limitations:</b> Locations are approximate, based on historical descriptions rather than plotted surveys. Entries are name matches only: one name may be several men, and nothing here asserts kinship between any two entries. <b>The records were transcribed with AI assistance and may contain errors; consult the original record before relying on any entry.</b> Sources are given with each record where known.</p>
-  <details class="howbox" id="quick"><summary>How to use this map</summary>
+<header class="ofhead"><div>
+  <div class="eyebrow">Kent Family &amp; DNA Project</div>
+  <h1>Kent and Kint Records Map</h1>
+  <p class="lede">Land, tax, census, military, court and vital records for the Kent, Kint and Kindt families of the Northern New Jersey and Southern New York corridor, 1720 to 1890.</p>
+</div>
+  <div class="thm" id="thm" role="group" aria-label="Colour theme"><button type="button" data-t="">System</button><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></div>
+</header>
+<div class="notice" role="note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg><p>Records were transcribed with AI assistance and may contain errors. Check each against the original. Names are as written, and one name may be several people; nothing here asserts kinship. Map positions are approximate, not to survey.</p></div>
+<details class="howbox" id="quick"><summary>How to use this map</summary>
     <ul>
       <li><b>Choose what to see.</b> In Filters, pick counties or townships and tick the kinds of record. The map and every list follow that choice.</li>
       <li><b>Read the markers.</b> Numbered circle = a township as the records name it; the number is how many records name it; its pop-up window lists them in order of year, each with a coloured badge for its kind of record (Land, Tax, Census, Military, Court, B/M/D, Misc). Numbered squares in the bar directly below the map = records that name only the county (they are not placed on the map). Letter = one particular place in Morris County. ◇ = the Swine Field court case. Hover over a marker for a summary; click it for a pop-up window listing its records.</li>
@@ -379,18 +504,35 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
       <li><b>Terms.</b> &quot;Township only&quot; = the record names an old township, not a lot, so no exact spot is shown. &quot;n.d.&quot; = no date recorded. &quot;Deed workbook&quot; = the compiler’s deed research workbook; a dash in a book-and-page column = book and page were not recorded. † = acreage taken from the compiler’s research notes, not read from the deed.</li>
     </ul>
   </details>
-</header>
 
 <nav class="toc" id="toc" aria-label="Page sections">
   <a href="#mapsec">Map</a><a href="#records">Records</a><a href="#records" data-tab="idx">Index of individuals</a><a href="#reference">About this map</a>
 </nav>
 
-<section class="sheet" id="filters" aria-label="Filters and quick jump">
-  <h2 class="fh">Filters &amp; quick jump</h2>
+
+
+<div class="ctlrow">
+  <div class="ctl"><span class="ctll" id="vlab">View</span><div class="vseg" id="vbtns" role="group" aria-labelledby="vlab"><button type="button" data-v="core">Essex core</button><button type="button" data-v="morris">Morris and Highlands</button><button type="button" data-v="all">Whole corridor</button></div></div>
+  <div class="ctljump"><div class="tfbar tftop"><label for="tfsel" class="arrl">Jump to place:</label><select id="tfsel" aria-label="Jump to a county or township"></select><button type="button" class="chip" id="tfgo" hidden>Select</button><button type="button" class="chip" id="tfprev" aria-label="Previous township">◀</button><button type="button" class="chip" id="tfnext" aria-label="Next township">▶</button></div><div class="tfbar tftop rsselbar"><label for="rssel" class="arrl">Individual / Family Group:</label><input type="search" id="rsselq" placeholder="Search names…" aria-label="Search individuals and family groups" autocomplete="off"><select id="rssel" aria-label="Show only the records linked to an individual or family group"><option value="">All Records</option></select></div></div>
+  <button type="button" class="fbtn" id="fbtn" aria-controls="filters" aria-expanded="false">Filters</button>
+</div>
+  <div id="rscard" class="rscard" hidden aria-live="polite"></div>
+<div class="layout">
+<aside class="sheet" id="filters" aria-label="Filters">
+  <div class="fgrp"><h2>Years</h2>
   <div class="frow fyr"><div class="yr"><span class="arrl">Years:</span><label for="y0" class="vh">From</label><input type="range" id="y0" min="1720" max="1890" value="1720"><output id="o0">1720</output>
         <label for="y1">to</label><input type="range" id="y1" min="1720" max="1890" value="1890"><output id="o1">1890</output></div></div>
-  <div class="frow ftop"><div class="tfbar tftop"><label for="tfsel" class="arrl">Jump to place:</label><select id="tfsel" aria-label="Jump to a county or township"></select><button type="button" class="chip" id="tfgo" hidden>Select</button><button type="button" class="chip" id="tfprev" aria-label="Previous township">◀</button><button type="button" class="chip" id="tfnext" aria-label="Next township">▶</button></div><div class="tfbar tftop rsselbar"><label for="rssel" class="arrl">Individual / Family Group:</label><input type="search" id="rsselq" placeholder="Search names…" aria-label="Search individuals and family groups" autocomplete="off"><select id="rssel" aria-label="Show only the records linked to an individual or family group"><option value="">All Records</option></select></div></div>
-  <div id="rscard" class="rscard" hidden aria-live="polite"></div>
+  </div>
+  <div class="fgrp"><h2>Record types</h2><div class="flist">
+    <label class="ck"><input type="checkbox" id="landall" checked><i class="dot" style="background:var(--c-land)" aria-hidden="true"></i><span>Land</span></label>
+    <label class="ck"><input type="checkbox" id="ratall" checked><i class="dot" style="background:var(--c-tax)" aria-hidden="true"></i><span>Tax ratables and lists</span></label>
+    <label class="ck"><input type="checkbox" id="cenall" checked><i class="dot" style="background:var(--c-cen)" aria-hidden="true"></i><span>Census</span></label>
+    <label class="ck"><input type="checkbox" id="milall" checked><i class="dot" style="background:var(--c-mil)" aria-hidden="true"></i><span>Military</span></label>
+    <label class="ck"><input type="checkbox" id="courtall" checked><i class="dot" style="background:var(--c-court)" aria-hidden="true"></i><span>Court</span></label>
+    <label class="ck"><input type="checkbox" id="bmdall" checked><i class="dot" style="background:var(--c-bmd)" aria-hidden="true"></i><span>Births, marriages, deaths</span></label>
+    <label class="ck"><input type="checkbox" id="miscall" checked><i class="dot" style="background:var(--c-misc)" aria-hidden="true"></i><span>Miscellaneous</span></label>
+  </div></div>
+  <div class="fgrp"><h2>Counties</h2>
   <div class="frow">
 <div class="fc">
       <div class="seg" id="cbtns" role="group" aria-label="New Jersey counties to show"><span class="arrl">Filter New Jersey:</span></div>
@@ -403,26 +545,18 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
     <div class="lb-cols" id="lbcols"></div>
   </details>
   </div>
-  <div class="frow"><span class="arrl">Record types:</span>
-    <label class="ck"><input type="checkbox" id="landall" checked><b>Land</b></label>
-    <label class="ck"><input type="checkbox" id="ratall" checked><b>Tax</b></label>
-    <label class="ck"><input type="checkbox" id="cenall" checked><b>Census</b></label>
-    <label class="ck"><input type="checkbox" id="milall" checked><b>Military</b></label>
-    <label class="ck"><input type="checkbox" id="courtall" checked><b>Court</b></label>
-    <label class="ck"><input type="checkbox" id="bmdall" checked><b>B/M/D</b></label>
-    <label class="ck"><input type="checkbox" id="miscall" checked><b>Misc</b></label>
   </div>
-  <details id="morefilters" class="tf"><summary>Map layers</summary>
-  <div class="frow">
+  <div class="fgrp" id="morefilters"><h2>Map layers</h2><div class="flist">
+<div class="frow">
     <label class="ck"><input type="checkbox" id="twpl">Township lines (c. 1830)</label>
     <label class="ck"><input type="checkbox" id="rds">Roads</label>
     <label class="ck"><input type="checkbox" id="jl">East/West Jersey lines (approx.)</label>
     <label class="ck"><input type="checkbox" id="wjs">Shade the proposed West Jersey side (1688 line)</label>
     <label class="ck"><input type="checkbox" id="ter" checked>Terrain: mountains and valleys (schematic)</label>
   </div>
-  </details>
-</section>
-
+  </div></div>
+</aside>
+<div class="mainc">
 <div class="grid">
   <section class="sheet" id="mapsec" aria-label="Map">
     <div class="mapbox"><div class="zbar" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button></div>
@@ -430,6 +564,7 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
     </div>
     <div id="cmbar" class="cmbar" role="group" aria-label="County-level records"></div>
     <p class="zhint">Click a township name on the map to zoom to that township and list its records beside the map. Click a numbered township marker for a pop-up window of every record that names the township; click a lettered marker for that place's records.</p>
+    <div class="lstrip" aria-hidden="true"><span><i class="dot" style="background:var(--accent)"></i>Place named in the record</span><span><i class="dot" style="background:var(--tag)"></i>Approximate locality</span><span><i class="dot" style="background:var(--twp)"></i>Township only</span><span><i class="ring"></i>Township circle with record count</span><span><i class="sqk"></i>Tax list square</span></div>
     <details class="legd" id="legd"><summary>Map Legend &amp; Marker Key</summary>
     <div class="legend">
       <span><i class="tmk">12</i>Township marker: the number is how many records name that township; click it for a pop-up window of all of them. Position is approximate (the middle of the township's named places, or its name on the map), not a lot.</span>
@@ -465,6 +600,8 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
     </div>
     <div class="list" id="list" hidden></div>
   </section>
+</div>
+</div>
 </div>
 
 <section class="sheet" id="records" aria-label="Records">

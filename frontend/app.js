@@ -1218,3 +1218,21 @@ const RS=(()=>{
   const top=()=>{if(moved)return;own=Date.now();window.scrollTo(0,0);const se=document.scrollingElement||document.documentElement;if(se)se.scrollTop=0;document.body.scrollTop=0};
   top();requestAnimationFrame(top);setTimeout(top,150);addEventListener('load',()=>{top();setTimeout(top,300);setTimeout(top,800);setTimeout(top,1600)});try{document.fonts&&document.fonts.ready.then(()=>{top();setTimeout(top,200)})}catch(e){}
   addEventListener('pageshow',e=>{if(e.persisted){moved=false;top();setTimeout(top,150)}})})();
+
+/* ourfamilytree.net (site mockup): the View buttons set the map view by hand (choosing counties still
+   picks one automatically), and on phones the Filters button shows or hides the filter panel. */
+(function(){const box=document.getElementById('vbtns');
+  const sync=()=>box&&box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===view));
+  if(box)box.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(!b||b.dataset.v===view)return;view=b.dataset.v;draw()});
+  const _d=draw;draw=function(){_d();sync()};sync();
+  const fb=document.getElementById('fbtn');
+  if(fb)fb.onclick=()=>{const on=document.body.classList.toggle('fopen');fb.setAttribute('aria-expanded',on);fb.textContent=on?'Hide filters':'Filters'}})();
+
+/* ourfamilytree.net: colour theme switch (System follows the device). The choice is kept in this
+   browser only; map colours are CSS variables, so nothing is redrawn. */
+(function(){const box=document.getElementById('thm');if(!box)return;const root=document.documentElement;
+  const sync=()=>box.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',(root.dataset.theme||'')===b.dataset.t));
+  box.addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;
+    if(b.dataset.t)root.dataset.theme=b.dataset.t;else delete root.dataset.theme;
+    try{if(b.dataset.t)localStorage.setItem('oft-theme',b.dataset.t);else localStorage.removeItem('oft-theme')}catch(e){}
+    sync()});sync()})();
