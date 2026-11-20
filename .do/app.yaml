@@ -1,74 +1,84 @@
-# DigitalOcean App Platform spec. Create or update the app with:
-#   doctl apps create --spec .do/app.yaml          (first time)
-#   doctl apps update <app-id> --spec .do/app.yaml  (after changes)
-# Secrets (type SECRET) are set here as placeholders; enter the real values in the control panel
-# or in a local copy of this file, never in git.
+# DigitalOcean App Platform spec, the same as the live app (doctl apps spec get <app-id>).
+# Apply changes with: doctl apps update <app-id> --spec .do/app.yaml
+# GOOGLE_CLIENT_SECRET is encrypted by App Platform (EV[...]) and works only for this app.
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+databases:
+- cluster_name: ourfamilytree
+  db_name: defaultdb
+  db_user: doadmin
+  engine: PG
+  name: ourfamilytree
+  production: true
+domains:
+- domain: ourfamilytree.net
+  type: PRIMARY
+envs:
+- key: ADMIN_EMAILS
+  scope: RUN_TIME
+  value: michelle@gavinroy.com,gavinmroy@gmail.com
+- key: GOOGLE_CLIENT_ID
+  scope: RUN_AND_BUILD_TIME
+  value: 751488385288-lkm29gq3vp16me9365goo8vo41auuc1i.apps.googleusercontent.com
+- key: GOOGLE_CLIENT_SECRET
+  scope: RUN_AND_BUILD_TIME
+  type: SECRET
+  value: EV[1:pGfML2pygg8WEzvg0c2yJDHQEQ2XnZB6:7Tsx/8dnPH70X7dfRgRQYRIwKbh8i7axRdvbKD730BVwJ2BGzqtbIf9iaUkJda/g5q82]
+features:
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: ourfamilytree-net
+    match:
+      authority:
+        exact: ""
+      path:
+        prefix: /
+jobs:
+- dockerfile_path: /Dockerfile
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${ourfamilytree.DATABASE_URL}
+  - key: DATABASE_CA_CERT
+    scope: RUN_TIME
+    value: ${ourfamilytree.CA_CERT}
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: gmr/ourfamilytree.net
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-1gb-fixed
+  kind: PRE_DEPLOY
+  name: seed
+  run_command: oft-api import-seed
+  source_dir: /
 name: ourfamilytree
 region: nyc
-
-domains:
-  - domain: ourfamilytree.net
-    type: PRIMARY
-  - domain: www.ourfamilytree.net
-    type: ALIAS
-
-# The existing managed cluster. Create the database and user first (see README).
-databases:
-  - name: db
-    engine: PG
-    production: true
-    cluster_name: ourfamilytree
-    db_name: oft
-    db_user: oft
-
 services:
-  - name: web
-    github:
-      repo: gmr/ourfamilytree.net
-      branch: main
-      deploy_on_push: true
-    dockerfile_path: Dockerfile
-    http_port: 8080
-    # One instance: the nightly research backup runs inside the app.
-    instance_count: 1
-    instance_size_slug: apps-s-1vcpu-0.5gb
-    health_check:
-      http_path: /health
-    envs:
-      - key: DATABASE_URL
-        scope: RUN_TIME
-        value: ${db.DATABASE_URL}
-      - key: DATABASE_CA_CERT
-        scope: RUN_TIME
-        value: ${db.CA_CERT}
-      - key: BASE_URL
-        scope: RUN_TIME
-        value: https://ourfamilytree.net
-      - key: ADMIN_EMAILS
-        scope: RUN_TIME
-        value: CHANGE-ME@example.com
-      - key: GOOGLE_CLIENT_ID
-        scope: RUN_TIME
-        value: CHANGE-ME
-      - key: GOOGLE_CLIENT_SECRET
-        scope: RUN_TIME
-        type: SECRET
-        value: CHANGE-ME
-
-jobs:
-  # Loads seed/ (map data and records) before each deploy. Safe to re-run: record ids are kept.
-  - name: seed
-    kind: PRE_DEPLOY
-    github:
-      repo: gmr/ourfamilytree.net
-      branch: main
-    dockerfile_path: Dockerfile
-    instance_size_slug: apps-s-1vcpu-0.5gb
-    run_command: oft-api import-seed
-    envs:
-      - key: DATABASE_URL
-        scope: RUN_TIME
-        value: ${db.DATABASE_URL}
-      - key: DATABASE_CA_CERT
-        scope: RUN_TIME
-        value: ${db.CA_CERT}
+- dockerfile_path: /Dockerfile
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${ourfamilytree.DATABASE_URL}
+  - key: DATABASE_CA_CERT
+    scope: RUN_TIME
+    value: ${ourfamilytree.CA_CERT}
+  - key: BASE_URL
+    scope: RUN_TIME
+    value: ${APP_URL}
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: gmr/ourfamilytree.net
+  health_check:
+    http_path: /health
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-1gb-fixed
+  name: ourfamilytree-net
+  source_dir: /
+vpc:
+  id: b957b3e7-dc84-11e8-8650-3cfdfea9f8c8

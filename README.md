@@ -20,13 +20,11 @@ Connect an MCP client to `http://localhost:8080/mcp`. For example, in Claude Cod
 The app is described by `.do/app.yaml`. App Platform builds the Dockerfile from `main` on every
 push, runs `oft-api import-seed` before each deploy, and serves HTTPS for `ourfamilytree.net`.
 
-1. Managed Postgres cluster `ourfamilytree`: create the database and user once:
-   `doctl databases db create <cluster-id> oft` and `doctl databases user create <cluster-id> oft`.
-   Then give the user the schema: connect as `doadmin` and run `ALTER DATABASE oft OWNER TO oft;`.
-2. Google Cloud console: create an OAuth client of type "Web application" with the redirect URI
+1. Managed Postgres cluster `ourfamilytree` (the app uses its `defaultdb` as `doadmin`).
+2. Google Cloud console: OAuth client of type "Web application" with the redirect URIs
+   `https://ourfamilytree-4yskv.ondigitalocean.app/oauth/google/callback` and
    `https://ourfamilytree.net/oauth/google/callback`.
-3. `doctl apps create --spec .do/app.yaml`, then in the control panel (App → Settings → web →
-   Environment variables) set `ADMIN_EMAILS`, `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+3. `doctl apps update <app-id> --spec .do/app.yaml` applies spec changes. `BASE_URL` is `${APP_URL}`.
 4. DNS: point `ourfamilytree.net` and `www` at the app as the control panel shows (App → Settings →
    Domains).
 5. In Claude, signed in as an `ADMIN_EMAILS` address: Settings → Connectors → Add custom connector →
