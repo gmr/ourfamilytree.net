@@ -258,13 +258,6 @@ pub async fn upsert_user(
     .await
 }
 
-pub async fn active_user_by_email(c: &mut PgConnection, email: &str) -> Result<Option<User>> {
-    sqlx::query_as("SELECT id, email, display_name, role, active FROM app_user WHERE email = lower($1) AND active")
-        .bind(email)
-        .fetch_optional(c)
-        .await
-}
-
 pub async fn users(c: &mut PgConnection) -> Result<Vec<User>> {
     sqlx::query_as("SELECT id, email, display_name, role, active FROM app_user ORDER BY email")
         .fetch_all(c)
@@ -737,6 +730,13 @@ pub async fn oauth_register_client(
     Ok(())
 }
 
+pub async fn oauth_client_name(c: &mut PgConnection, id: &str) -> Result<Option<String>> {
+    sqlx::query_scalar("SELECT name FROM oauth_client WHERE id=$1")
+        .bind(id)
+        .fetch_optional(c)
+        .await
+}
+
 pub async fn oauth_client_redirects(c: &mut PgConnection, id: &str) -> Result<Option<Vec<String>>> {
     sqlx::query_scalar("SELECT redirect_uris FROM oauth_client WHERE id=$1")
         .bind(id)
@@ -750,18 +750,21 @@ pub struct OAuthRequest {
     pub redirect_uri: String,
     pub code_challenge: String,
     pub client_state: Option<String>,
+    /// Set once the person has signed in; the request then waits for consent.
+    pub user_id: Option<Uuid>,
 }
 
 pub async fn oauth_save_request(c: &mut PgConnection, id: &str, r: &OAuthRequest) -> Result<()> {
     sqlx::query(
-        "INSERT INTO oauth_request (id, client_id, redirect_uri, code_challenge, client_state, expires_at)
-         VALUES ($1,$2,$3,$4,$5, now() + interval '10 minutes')",
+        "INSERT INTO oauth_request (id, client_id, redirect_uri, code_challenge, client_state, user_id, expires_at)
+         VALUES ($1,$2,$3,$4,$5,$6, now() + interval '10 minutes')",
     )
     .bind(id)
     .bind(&r.client_id)
     .bind(&r.redirect_uri)
     .bind(&r.code_challenge)
     .bind(&r.client_state)
+    .bind(r.user_id)
     .execute(c)
     .await?;
     Ok(())
@@ -770,7 +773,7 @@ pub async fn oauth_save_request(c: &mut PgConnection, id: &str, r: &OAuthRequest
 pub async fn oauth_take_request(c: &mut PgConnection, id: &str) -> Result<Option<OAuthRequest>> {
     sqlx::query_as(
         "DELETE FROM oauth_request WHERE id=$1 AND expires_at > now()
-         RETURNING client_id, redirect_uri, code_challenge, client_state",
+         RETURNING client_id, redirect_uri, code_challenge, client_state, user_id",
     )
     .bind(id)
     .fetch_optional(c)
@@ -841,11 +844,14 @@ pub async fn oauth_save_token(
 pub async fn oauth_take_refresh(
     c: &mut PgConnection,
     hash: &str,
+    client: &str,
 ) -> Result<Option<(String, Uuid)>> {
     sqlx::query_as(
-        "DELETE FROM oauth_token WHERE token_hash=$1 AND kind='refresh' AND expires_at > now() RETURNING client_id, user_id",
+        "DELETE FROM oauth_token WHERE token_hash=$1 AND client_id=$2 AND kind='refresh' AND expires_at > now()
+         RETURNING client_id, user_id",
     )
     .bind(hash)
+    .bind(client)
     .fetch_optional(c)
     .await
 }

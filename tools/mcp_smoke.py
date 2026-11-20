@@ -8,6 +8,7 @@ delete. Standard library only:  python3 tools/mcp_smoke.py [http://localhost:808
 import base64
 import hashlib
 import json
+import re
 import secrets
 import sys
 import urllib.error
@@ -53,10 +54,20 @@ verifier = secrets.token_urlsafe(48)
 challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b'=').decode()
 q = urllib.parse.urlencode({'response_type': 'code', 'client_id': client, 'redirect_uri': 'http://localhost:9/cb',
                             'code_challenge': challenge, 'code_challenge_method': 'S256', 'state': 'xyz'})
-s, h, b = http('GET', BASE + '/authorize?' + q)
-loc = h.get('location') or h.get('Location')
-assert s in (302, 303, 307) and loc, (s, b)
-params = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)
+def approve():
+    """Dev login lands on the consent page; check what it names, then press Allow."""
+    s, h, b = http('GET', BASE + '/authorize?' + q)
+    assert s == 200 and 'smoke' in b and 'localhost' in b and "frame-ancestors 'none'" in h.get('content-security-policy', h.get('Content-Security-Policy', '')), (s, b)
+    cid = re.search(r"name=id value='([^']+)'", b).group(1)
+    s, h, b = http('POST', BASE + '/authorize/consent', {'id': cid, 'decision': 'allow'}, form=True)
+    loc = h.get('location') or h.get('Location')
+    assert s in (302, 303, 307) and loc, (s, b)
+    s2, _, _ = http('POST', BASE + '/authorize/consent', {'id': cid, 'decision': 'allow'}, form=True)
+    assert s2 == 400, 'a consent id is single use'
+    return urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)
+
+
+params = approve()
 assert params['state'] == ['xyz']
 s, _, b = http('POST', BASE + '/token', {'grant_type': 'authorization_code', 'code': params['code'][0],
                                          'redirect_uri': 'http://localhost:9/cb', 'client_id': client,
@@ -66,13 +77,14 @@ s, _, b = http('POST', BASE + '/token', {'grant_type': 'authorization_code', 'co
                                          'redirect_uri': 'http://localhost:9/cb', 'client_id': client,
                                          'code_verifier': verifier}, form=True)
 assert s == 400, 'a code is single use, even after a failed attempt'
-s, h, b = http('GET', BASE + '/authorize?' + q)
-code = urllib.parse.parse_qs(urllib.parse.urlparse(h.get('location') or h.get('Location')).query)['code'][0]
+code = approve()['code'][0]
 s, _, b = http('POST', BASE + '/token', {'grant_type': 'authorization_code', 'code': code,
                                          'redirect_uri': 'http://localhost:9/cb', 'client_id': client,
                                          'code_verifier': verifier}, form=True)
 assert s == 200, (s, b)
 tok = json.loads(b)
+s, _, b = http('POST', BASE + '/token', {'grant_type': 'refresh_token', 'refresh_token': tok['refresh_token']}, form=True)
+assert s == 400, 'refresh needs client_id'
 s, _, b = http('POST', BASE + '/token', {'grant_type': 'refresh_token', 'refresh_token': tok['refresh_token'],
                                          'client_id': client}, form=True)
 assert s == 200, (s, b)

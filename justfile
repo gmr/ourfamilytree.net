@@ -17,10 +17,6 @@ db-stop:
 seed:
     cargo run -p oft-api -- import-seed
 
-# Add an administrator who may sign in to the MCP server
-user email role="co_admin":
-    cargo run -p oft-api -- user-add --email {{email}} --role {{role}}
-
 # Run the site and MCP server on :8080
 serve:
     cargo run -p oft-api -- serve

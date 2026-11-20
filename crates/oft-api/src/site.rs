@@ -1,7 +1,7 @@
 //! The public site: the v114 page split into index.html + app.js, and data.js built from the
 //! database. No write routes exist here; all writes go through MCP.
 
-use std::sync::Arc;
+use std::sync::{Arc, atomic::Ordering};
 
 use axum::{
     extract::State,
@@ -24,16 +24,23 @@ pub async fn data_js(State(st): State<AppState>, headers: HeaderMap) -> Response
     let cached = st.data_js.read().await.clone();
     let (etag, body) = match cached {
         Some(c) => c,
-        None => match build_public_data_js(&st).await {
-            Ok(c) => {
-                *st.data_js.write().await = Some(c.clone());
-                c
+        None => {
+            let generation = st.data_gen.load(Ordering::SeqCst);
+            match build_public_data_js(&st).await {
+                Ok(c) => {
+                    // Cache only if research did not change while this was built.
+                    let mut w = st.data_js.write().await;
+                    if st.data_gen.load(Ordering::SeqCst) == generation {
+                        *w = Some(c.clone());
+                    }
+                    c
+                }
+                Err(e) => {
+                    tracing::error!("data.js: {e}");
+                    return StatusCode::SERVICE_UNAVAILABLE.into_response();
+                }
             }
-            Err(e) => {
-                tracing::error!("data.js: {e}");
-                return StatusCode::SERVICE_UNAVAILABLE.into_response();
-            }
-        },
+        }
     };
     if headers
         .get(header::IF_NONE_MATCH)

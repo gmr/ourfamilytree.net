@@ -40,6 +40,7 @@ jobs:
       DATABASE_URL: postgres://oft:ci@localhost:5432/oft
       BASE_URL: http://localhost:8080
       DEV_LOGIN_EMAIL: ci@localhost
+      ADMIN_EMAILS: ci@localhost
       PW_CHANNEL: chromium
     steps:
       - uses: actions/checkout@v7
@@ -52,7 +53,6 @@ jobs:
           node-version: "22"
       - run: cargo build -p oft-api
       - run: ./target/debug/oft-api import-seed
-      - run: ./target/debug/oft-api user-add --email ci@localhost --role admin
       - run: ./target/debug/oft-api serve &
       - run: for i in $(seq 1 30); do curl -sf localhost:8080/health && break; sleep 1; done
       - run: cd tools/extract && npm ci && npx playwright install --with-deps chromium

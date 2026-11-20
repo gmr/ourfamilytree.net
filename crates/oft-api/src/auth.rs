@@ -196,10 +196,11 @@ pub async fn authorize(State(st): State<AppState>, Query(q): Query<AuthorizeReq>
         redirect_uri: q.redirect_uri,
         code_challenge: q.code_challenge,
         client_state: q.state,
+        user_id: None,
     };
     // Local development only (refused at start-up unless the base URL is localhost).
     if let Some(email) = &st.dev_login_email {
-        return finish(&mut c, &req, email).await;
+        return consent(&st, &mut c, req, email).await;
     }
     let Some(g) = &st.google else {
         return page(
@@ -241,31 +242,122 @@ fn redirect_error(redirect_uri: &str, error: &str, state: Option<&str>) -> Respo
     Redirect::to(u.as_str()).into_response()
 }
 
-/// Issues an authorization code for an allowed email and sends the browser back to the client.
-async fn finish(
+fn esc(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+/// After sign-in, asks the administrator to approve this client by name and return address,
+/// so a link from someone else's registered client cannot silently mint tokens. The form's
+/// one-time id (stored hashed, 10 minutes) is the CSRF token.
+async fn consent(
+    st: &AppState,
     c: &mut oft_db::sqlx::PgConnection,
-    req: &oft_db::OAuthRequest,
+    mut req: oft_db::OAuthRequest,
     email: &str,
 ) -> Response {
-    let user = match oft_db::active_user_by_email(c, email).await {
-        Ok(Some(u)) => u,
-        Ok(None) => {
-            tracing::warn!(email, "sign-in refused: not an administrator");
-            return page(
-                StatusCode::FORBIDDEN,
-                &format!("{email} is not on the list of administrators for this site."),
-            );
-        }
+    // ADMIN_EMAILS is the only list of who may sign in; app_user just records them for the audit log.
+    if !st.admin_emails.contains(&email.to_lowercase()) {
+        tracing::warn!(email, "sign-in refused: not in ADMIN_EMAILS");
+        return page(
+            StatusCode::FORBIDDEN,
+            &format!("{email} is not on the list of administrators for this site."),
+        );
+    }
+    let user = match oft_db::upsert_user(c, email, "", "admin", true).await {
+        Ok(u) => u,
         Err(_) => return StatusCode::SERVICE_UNAVAILABLE.into_response(),
     };
-    let code = random_token();
-    if oft_db::oauth_save_code(c, &hash(&code), user.id, req)
+    let name = oft_db::oauth_client_name(c, &req.client_id)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    req.user_id = Some(user.id);
+    let id = random_token();
+    if oft_db::oauth_save_request(c, &hash(&id), &req)
         .await
         .is_err()
     {
         return StatusCode::SERVICE_UNAVAILABLE.into_response();
     }
-    tracing::info!(email = %user.email, "MCP sign-in");
+    let dest = Url::parse(&req.redirect_uri)
+        .ok()
+        .and_then(|u| u.host_str().map(str::to_string))
+        .unwrap_or_default();
+    let body = format!(
+        "<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Allow access</title>\
+         <body style='font:16px system-ui;max-width:36em;margin:3em auto;padding:0 16px;color:#0f172a'>\
+         <h1 style='font-size:22px'>Kent and Kint Records Map</h1>\
+         <p>Signed in as <b>{email}</b>.</p>\
+         <p>The application <b>{name}</b> asks to read and change research on this site, and will receive access at \
+         <b>{dest}</b>.</p><p>Allow it only if you started this from Claude just now.</p>\
+         <form method=post action='/authorize/consent'><input type=hidden name=id value='{id}'>\
+         <button name=decision value=allow style='font:600 15px system-ui;padding:10px 18px;border:0;border-radius:8px;background:#b91c1c;color:#fff'>Allow</button> \
+         <button name=decision value=deny style='font:600 15px system-ui;padding:10px 18px;border:1px solid #cbd5e1;border-radius:8px;background:#fff'>Deny</button></form>",
+        email = esc(&user.email),
+        name = esc(if name.is_empty() {
+            "(unnamed application)"
+        } else {
+            &name
+        }),
+        dest = esc(&dest),
+    );
+    let mut r = Html(body).into_response();
+    r.headers_mut().insert(
+        header::CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static("frame-ancestors 'none'"),
+    );
+    r.headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    r
+}
+
+#[derive(Deserialize)]
+pub struct ConsentForm {
+    id: String,
+    decision: String,
+}
+
+/// Issues the authorization code after the administrator approves.
+pub async fn consent_post(State(st): State<AppState>, Form(f): Form<ConsentForm>) -> Response {
+    let mut c = match st.pool.acquire().await {
+        Ok(c) => c,
+        Err(_) => return StatusCode::SERVICE_UNAVAILABLE.into_response(),
+    };
+    let Some(req) = oft_db::oauth_take_request(&mut c, &hash(&f.id))
+        .await
+        .ok()
+        .flatten()
+    else {
+        return page(
+            StatusCode::BAD_REQUEST,
+            "This approval has expired. Start again from Claude.",
+        );
+    };
+    let Some(user) = req.user_id else {
+        return page(
+            StatusCode::BAD_REQUEST,
+            "This approval is not valid. Start again from Claude.",
+        );
+    };
+    if f.decision != "allow" {
+        return redirect_error(
+            &req.redirect_uri,
+            "access_denied",
+            req.client_state.as_deref(),
+        );
+    }
+    let code = random_token();
+    if oft_db::oauth_save_code(&mut c, &hash(&code), user, &req)
+        .await
+        .is_err()
+    {
+        return StatusCode::SERVICE_UNAVAILABLE.into_response();
+    }
+    tracing::info!(%user, client = %req.client_id, "MCP access approved");
     let mut u = Url::parse(&req.redirect_uri).expect("registered uri parses");
     u.query_pairs_mut().append_pair("code", &code);
     if let Some(s) = &req.client_state {
@@ -293,6 +385,7 @@ pub async fn google_callback(
         .await
         .ok()
         .flatten()
+        .filter(|r| r.user_id.is_none())
     else {
         return page(
             StatusCode::BAD_REQUEST,
@@ -313,7 +406,7 @@ pub async fn google_callback(
             return page(StatusCode::BAD_GATEWAY, "Google sign-in failed. Try again.");
         }
     };
-    finish(&mut c, &req, &email).await
+    consent(&st, &mut c, req, &email).await
 }
 
 async fn google_email(
@@ -397,7 +490,7 @@ pub async fn token(State(st): State<AppState>, Form(t): Form<TokenReq>) -> Respo
             };
             let challenge = URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes()));
             if challenge != row.code_challenge
-                || t.client_id.as_deref().is_some_and(|id| id != row.client_id)
+                || t.client_id.as_deref() != Some(row.client_id.as_str())
                 || t.redirect_uri
                     .as_deref()
                     .is_some_and(|u| u != row.redirect_uri)
@@ -418,14 +511,17 @@ pub async fn token(State(st): State<AppState>, Form(t): Form<TokenReq>) -> Respo
                     "refresh_token is required",
                 );
             };
-            match oft_db::oauth_take_refresh(&mut c, &hash(&rt))
-                .await
-                .ok()
-                .flatten()
+            // Only the client the token was issued to can use (and so consume) it.
+            match oft_db::oauth_take_refresh(
+                &mut c,
+                &hash(&rt),
+                t.client_id.as_deref().unwrap_or_default(),
+            )
+            .await
+            .ok()
+            .flatten()
             {
-                Some((client, user)) if t.client_id.as_deref().is_none_or(|id| id == client) => {
-                    (client, user)
-                }
+                Some(found) => found,
                 _ => {
                     return oauth_error(
                         StatusCode::BAD_REQUEST,
@@ -478,10 +574,12 @@ pub async fn require_bearer(State(st): State<AppState>, mut req: Request, next: 
         .map(str::to_string);
     let user = match token {
         Some(t) => match st.pool.acquire().await {
+            // Removing an email from ADMIN_EMAILS (and restarting) ends its access at once.
             Ok(mut c) => oft_db::oauth_token_user(&mut c, &hash(&t))
                 .await
                 .ok()
-                .flatten(),
+                .flatten()
+                .filter(|u| st.admin_emails.contains(&u.email)),
             Err(_) => return StatusCode::SERVICE_UNAVAILABLE.into_response(),
         },
         None => None,

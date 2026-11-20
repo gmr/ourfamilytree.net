@@ -14,7 +14,6 @@ Claude. PRD and design: `plans/` (local only, gitignored).
 ```bash
 just db                      # local Postgres on :5442 (copy .env.example to .env first)
 just seed                    # load seed/ into the database (safe to re-run)
-just user you@example.com admin
 just serve                   # site + MCP on :8080
 just ci                      # fmt-check, clippy -D warnings, unit tests
 just smoke                   # MCP end-to-end test (server must run with DEV_LOGIN_EMAIL set)
@@ -38,8 +37,8 @@ just parity                  # By-year rows and map SVG of the running site vs t
 - Crates: `oft-domain` (data.js writer, research JSON v1/v2, validation), `oft-db` (sqlx runtime
   queries, migrations in `crates/oft-db/migrations`), `oft-api` (Axum server, CLI, OAuth, MCP).
 - MCP: `rmcp` streamable HTTP at `/mcp`, behind `auth::require_bearer`. The app is its own OAuth 2.1
-  server (DCR + PKCE + refresh rotation) and signs people in with Google; only active `app_user`
-  emails get tokens. `DEV_LOGIN_EMAIL` skips Google and is refused unless `BASE_URL` is localhost.
+  server (DCR + PKCE + refresh rotation), signs people in with Google, then shows a consent page
+  naming the client. Only emails in `ADMIN_EMAILS` may sign in, and every MCP call re-checks it. `DEV_LOGIN_EMAIL` skips Google and is refused unless `BASE_URL` is localhost.
 - Every MCP write: one transaction, an `audit_log` row, then `AppState::invalidate()` so data.js is
   rebuilt. Destructive tools require `confirm: true`.
 - The `preview` tool is an MCP App (`ui://ourfamilytree/preview.html`): the whole page inlined, with

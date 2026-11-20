@@ -6,10 +6,9 @@ PostgreSQL and an MCP server through which the project administrators manage it 
 ## Run locally
 
 ```bash
-cp .env.example .env        # DEV_LOGIN_EMAIL=dev@localhost lets MCP sign-in skip Google
+cp .env.example .env        # ADMIN_EMAILS and DEV_LOGIN_EMAIL=dev@localhost: local sign-in skips Google
 just db                     # Postgres on localhost:5442
 just seed                   # map data and 883 records
-just user dev@localhost admin
 just serve                  # http://localhost:8080
 ```
 
@@ -27,13 +26,13 @@ Connect an MCP client to `http://localhost:8080/mcp`. For example, in Claude Cod
    ```
    DATABASE_URL=postgres://USER:PASS@HOST:25060/DB?sslmode=verify-full&sslrootcert=/certs/ca-certificate.crt
    BASE_URL=https://ourfamilytree.net
+   ADMIN_EMAILS=michelle@example.com,coadmin@example.com
    GOOGLE_CLIENT_ID=...
    GOOGLE_CLIENT_SECRET=...
    ```
 
 4. `docker compose -f compose.prod.yml up -d`, then once:
-   `docker compose -f compose.prod.yml run --rm app import-seed` and
-   `docker compose -f compose.prod.yml run --rm app user-add --email ADMIN@EXAMPLE --role admin`.
-5. In Claude: Settings → Connectors → Add custom connector → `https://ourfamilytree.net/mcp`.
+   `docker compose -f compose.prod.yml run --rm app import-seed`.
+5. In Claude (signed in as an `ADMIN_EMAILS` address): Settings → Connectors → Add custom connector → `https://ourfamilytree.net/mcp`.
 
 Images are built by `.github/workflows/docker.yml` on pushes to `main` and on `v*` tags.

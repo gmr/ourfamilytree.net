@@ -55,21 +55,7 @@ enum Cmd {
         #[arg(long)]
         dry_run: bool,
     },
-    /// Add or update an administrator (allowed to sign in to the MCP server).
-    UserAdd {
-        #[arg(long)]
-        email: String,
-        #[arg(long, default_value = "")]
-        name: String,
-        /// admin or co_admin
-        #[arg(long, default_value = "co_admin")]
-        role: String,
-    },
-    /// Stop an administrator signing in (existing tokens stop working at once).
-    UserDisable {
-        #[arg(long)]
-        email: String,
-    },
+    /// List people who have signed in to the MCP server (who may sign in is ADMIN_EMAILS).
     UserList,
     /// Take a manual research backup now.
     Backup,
@@ -89,16 +75,23 @@ pub struct AppState {
     pub google: Option<Google>,
     /// Development only: sign every MCP login in as this email, without Google.
     pub dev_login_email: Option<String>,
+    /// Lower-case emails allowed to sign in to the MCP server (ADMIN_EMAILS, comma-separated).
+    pub admin_emails: Arc<std::collections::HashSet<String>>,
     pub http: reqwest::Client,
     /// (etag, body) of the public data.js; None until built or after research changes.
     pub data_js: Arc<RwLock<Option<site::Cached>>>,
+    /// Bumped by every invalidate(); a data.js built before a bump is never cached.
+    pub data_gen: Arc<std::sync::atomic::AtomicU64>,
     pub auth_window: Arc<Mutex<(Instant, u32)>>,
 }
 
 impl AppState {
     /// Research changed: rebuild data.js on the next request.
     pub async fn invalidate(&self) {
-        *self.data_js.write().await = None;
+        let mut w = self.data_js.write().await;
+        self.data_gen
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        *w = None;
     }
 }
 
@@ -128,24 +121,6 @@ async fn main() -> Result<(), Error> {
             let v: Value = serde_json::from_slice(&std::fs::read(file)?)?;
             let rep = ops::import(&pool, v, replace, dry_run, None).await?;
             println!("{}", serde_json::to_string_pretty(&rep)?);
-            Ok(())
-        }
-        Cmd::UserAdd { email, name, role } => {
-            if !matches!(role.as_str(), "admin" | "co_admin") || !email.contains('@') {
-                return Err("role must be admin or co_admin, and email must be an address".into());
-            }
-            let u = oft_db::upsert_user(&mut *pool.acquire().await?, &email, &name, &role, true)
-                .await?;
-            println!("{} ({}) can sign in", u.email, u.role);
-            Ok(())
-        }
-        Cmd::UserDisable { email } => {
-            let mut c = pool.acquire().await?;
-            let u = oft_db::active_user_by_email(&mut c, &email)
-                .await?
-                .ok_or("no active user with that email")?;
-            oft_db::upsert_user(&mut c, &u.email, "", &u.role, false).await?;
-            println!("{} disabled", u.email);
             Ok(())
         }
         Cmd::UserList => {
@@ -196,6 +171,21 @@ async fn serve(pool: PgPool) -> Result<(), Error> {
         }),
         _ => None,
     };
+    let admin_emails: std::collections::HashSet<String> = std::env::var("ADMIN_EMAILS")
+        .unwrap_or_default()
+        .split(',')
+        .map(|e| e.trim().to_lowercase())
+        .filter(|e| e.contains('@'))
+        .collect();
+    if admin_emails.is_empty() {
+        tracing::warn!("ADMIN_EMAILS is empty: nobody can sign in to the MCP server");
+    }
+    if dev_login_email
+        .as_ref()
+        .is_some_and(|e| !admin_emails.contains(&e.to_lowercase()))
+    {
+        return Err("DEV_LOGIN_EMAIL must also be listed in ADMIN_EMAILS".into());
+    }
     if google.is_none() && dev_login_email.is_none() {
         tracing::warn!("GOOGLE_CLIENT_ID/SECRET not set: nobody can sign in to the MCP server");
     }
@@ -204,10 +194,12 @@ async fn serve(pool: PgPool) -> Result<(), Error> {
         base_url: base_url.clone(),
         google,
         dev_login_email,
+        admin_emails: Arc::new(admin_emails),
         http: reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(15))
             .build()?,
         data_js: Default::default(),
+        data_gen: Default::default(),
         auth_window: Arc::new(Mutex::new((Instant::now(), 0))),
     };
 
@@ -223,6 +215,7 @@ async fn serve(pool: PgPool) -> Result<(), Error> {
     let oauth = Router::new()
         .route("/register", post(auth::register))
         .route("/authorize", get(auth::authorize))
+        .route("/authorize/consent", post(auth::consent_post))
         .route("/token", post(auth::token))
         .route("/oauth/google/callback", get(auth::google_callback))
         .layer(middleware::from_fn_with_state(st.clone(), auth::rate_limit));
