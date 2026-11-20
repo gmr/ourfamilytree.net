@@ -20,5 +20,5 @@ EXPOSE 8080
 USER oft
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null || exit 1
-ENTRYPOINT ["oft-api"]
-CMD ["serve"]
+# No ENTRYPOINT, so App Platform run_command (e.g. "oft-api import-seed") replaces this cleanly.
+CMD ["oft-api", "serve"]

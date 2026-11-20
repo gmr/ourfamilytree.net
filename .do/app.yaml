@@ -1,0 +1,74 @@
+# DigitalOcean App Platform spec. Create or update the app with:
+#   doctl apps create --spec .do/app.yaml          (first time)
+#   doctl apps update <app-id> --spec .do/app.yaml  (after changes)
+# Secrets (type SECRET) are set here as placeholders; enter the real values in the control panel
+# or in a local copy of this file, never in git.
+name: ourfamilytree
+region: nyc
+
+domains:
+  - domain: ourfamilytree.net
+    type: PRIMARY
+  - domain: www.ourfamilytree.net
+    type: ALIAS
+
+# The existing managed cluster. Create the database and user first (see README).
+databases:
+  - name: db
+    engine: PG
+    production: true
+    cluster_name: ourfamilytree
+    db_name: oft
+    db_user: oft
+
+services:
+  - name: web
+    github:
+      repo: gmr/ourfamilytree.net
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    # One instance: the nightly research backup runs inside the app.
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    health_check:
+      http_path: /health
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: DATABASE_CA_CERT
+        scope: RUN_TIME
+        value: ${db.CA_CERT}
+      - key: BASE_URL
+        scope: RUN_TIME
+        value: https://ourfamilytree.net
+      - key: ADMIN_EMAILS
+        scope: RUN_TIME
+        value: CHANGE-ME@example.com
+      - key: GOOGLE_CLIENT_ID
+        scope: RUN_TIME
+        value: CHANGE-ME
+      - key: GOOGLE_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: CHANGE-ME
+
+jobs:
+  # Loads seed/ (map data and records) before each deploy. Safe to re-run: record ids are kept.
+  - name: seed
+    kind: PRE_DEPLOY
+    github:
+      repo: gmr/ourfamilytree.net
+      branch: main
+    dockerfile_path: Dockerfile
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: oft-api import-seed
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: DATABASE_CA_CERT
+        scope: RUN_TIME
+        value: ${db.CA_CERT}

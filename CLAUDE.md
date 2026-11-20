@@ -49,3 +49,4 @@ just parity                  # By-year rows and map SVG of the running site vs t
 - Records are never edited by research tools (PRD §4). `record.status` is soft delete only.
 - Never infer kinship or identity in code. No living people (dates after 1900 need a confirmation).
 - Rust edition 2024.
+- Deployment: DigitalOcean App Platform from `.do/app.yaml` (validate with `doctl apps spec validate`).

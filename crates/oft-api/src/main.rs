@@ -109,7 +109,8 @@ async fn main() -> Result<(), Error> {
         .init();
     let cli = Cli::parse();
     let url = cli.database_url.ok_or("DATABASE_URL is not set")?;
-    let pool = oft_db::connect(&url).await?;
+    let ca = std::env::var("DATABASE_CA_CERT").ok();
+    let pool = oft_db::connect(&url, ca.as_deref()).await?;
     match cli.command.unwrap_or(Cmd::Serve) {
         Cmd::Serve => serve(pool).await,
         Cmd::ImportSeed { datasets, records } => import_seed(&pool, &datasets, &records).await,

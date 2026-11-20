@@ -14,8 +14,15 @@ pub use sqlx;
 
 pub type Result<T> = std::result::Result<T, sqlx::Error>;
 
-pub async fn connect(url: &str) -> Result<PgPool> {
-    let opts = PgConnectOptions::from_str(url)?;
+/// Connects and runs migrations. With `ca_pem` (App Platform's `${db.CA_CERT}`), TLS is required and
+/// the server certificate is verified against it.
+pub async fn connect(url: &str, ca_pem: Option<&str>) -> Result<PgPool> {
+    let mut opts = PgConnectOptions::from_str(url)?;
+    if let Some(pem) = ca_pem.filter(|p| !p.trim().is_empty()) {
+        opts = opts
+            .ssl_mode(sqlx::postgres::PgSslMode::VerifyFull)
+            .ssl_root_cert_from_pem(pem.as_bytes().to_vec());
+    }
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect_with(opts)
