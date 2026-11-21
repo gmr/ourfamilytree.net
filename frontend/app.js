@@ -20,8 +20,10 @@ function shPlan(ids,coll){/* coll(m) -> rows with .k (unique record key) and .sh
   return{own,blocks,of}}
 const shTitle=b=>{const n=[...b.names].filter(Boolean),pl=[...new Set(b.rows.filter(r=>r.pk).map(r=>'Place '+r.pk))];return n.length?'Historical '+n.slice(0,4).join(' / ')+(n.length>4?' and others':'')+' township-only records'+(pl.length?' (with '+pl.join(', ')+')':''):'Shared township-only records: '+pl.join(', ')};
 const shApplies=b=>{const q=[...new Set(b.rows.map(r=>r.q).filter(Boolean))].sort((x,y)=>TFT.findIndex(z=>z[0]===x)-TFT.findIndex(z=>z[0]===y)).map(x=>TFLAB[x]||'Misc');return 'applies to '+b.ms.length+' modern municipalities'+(q.length?'; '+q.join(', '):'')};
-const shRef=(bs,noun)=>{noun=noun||['record','records'];return bs.length?`<p class="shref">Plus ${bs.map(b=>`<a href="#${b.id}" data-sh="${b.id}">${b.rows.length} shared ${b.rows.length===1?noun[0]:noun[1]}</a> in “${shTitle(b)}” (${shApplies(b)})`).join('; ')}, listed in the shared ${bs.length>1?'blocks':'block'} above.</p>`:''};
+const shRef=(bs,noun)=>{noun=noun||['record','records'];return bs.length?`<p class="shref">Plus ${bs.map(b=>`<a href="#${b.id}" data-sh="${b.id}">${b.rows.length} shared ${b.rows.length===1?noun[0]:noun[1]}</a> in “${shTitle(b)}” (${shApplies(b)})`).join('; ')}, listed once in the shared ${bs.length>1?'blocks':'block'} for this county and not counted above.</p>`:''};
 document.addEventListener('click',e=>{const a=e.target.closest('a[data-sh]');if(!a)return;const d=document.getElementById(a.dataset.sh);if(d){e.preventDefault();d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}});
+/* county-only links from a location's notice: open the county block and go to it */
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-co]');if(!a)return;const d=document.getElementById('co-'+a.dataset.co);if(d){e.preventDefault();d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}});
 /* data: served by /data.js */
 /* data: served by /data.js */
 /* data: served by /data.js */Object.entries(TG).forEach(([g,t])=>{const m=t.ids.map(i=>PL[i]);TGP[g]=[t.n,m.reduce((a,x)=>a+x[1],0)/m.length,m.reduce((a,x)=>a+x[2],0)/m.length,'deed',t.note,t.core]});
@@ -991,30 +993,59 @@ function buildYearList(){
   const frag=document.createDocumentFragment();
   const groups=lbMode==='county'?MUN_ORDER.map(cty=>[cty,munIds(cty)]):[[null,munIds()]];
   window.__shN=0;
+  /* Which state a county sits in, taken from its own label rather than a second list. */
+  const stOf=c=>/N\.Y\./.test(MUN_CTY[c]||'')?'New York':'New Jersey';
+  /* County-only records, built per county so they can sit inside that county's section
+     (PRD: display only; no record, citation or geographic classification is changed). */
+  const ctyOnly=c=>{
+    if(!window.cmData)return{html:'',nc:0,nn:0};
+    const o=window.cmData(c),UA=new Set(UNPLACED),UB=new Set(UNPLACED_M);
+    const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
+    Object.keys(o).forEach(q=>o[q].forEach(x=>((UA.has(x[1])||UB.has(x[1]))?none:split)[q].push(x)));
+    const rws=oo=>chronoRows(oo).map(x=>`<tr data-rid="${x[3]}"><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`);
+    const a=rws(split),b=rws(none);
+    /* data-sec carries the section name the record extractor stores. It is made from the data,
+       not from the heading above it, so the headings here can be reworded without moving records. */
+    const tbl=(r,sec)=>`<table class="twt" data-sec="${tipEsc(sec)}"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${r.join('')}</tbody></table>`;
+    const SEC_CO=MUN_CTY[c]+': records that name only the county, or no township',SEC_NP='Land and other records with no township given';
+    let html='';
+    if(a.length)html+=`<details class="ctyblk" id="co-${c}"><summary><span>${MUN_CTY[c]}: records that name only the county, or no township</span><span class="tc">${a.length} ${a.length===1?'record':'records'}</span></summary>`
+      +`<div class="twb"><p class="why2">These give only the county, so they are listed here rather than under a township. Any of them may relate to a location within ${MUN_CTY[c]}; none is counted in a township's own total.</p>${tbl(a,SEC_CO)}</div></details>`;
+    if(b.length)html+=`<details class="ctyblk" id="co-np-${c}"><summary><span>Land and other records with no township given</span><span class="tc">${b.length} ${b.length===1?'record':'records'}</span></summary>`
+      +`<div class="twb"><p class="why2">The deed index gives no township for these, or they name no place; they are not all on the map.</p>${tbl(b,SEC_NP)}</div></details>`;
+    return{html,nc:a.length,nn:b.length}};
+  const sect=(t,n)=>`<h4 class="gsec">${t}${n?`<span class="tc">${n}</span>`:''}</h4>`;
+  const coN={};MUN_ORDER.forEach(c=>{if(cActive(c)){const o=ctyOnly(c);coN[c]=o.nc}});
+  let curState='';
   groups.forEach(([cty,all])=>{
     const ids=all.filter(m=>munOn.has(m));if(!ids.length)return;
-    if(cty){const h=document.createElement('h3');h.className='sub';h.textContent=MUN_CTY[cty]+' ('+ids.length+' '+(ids.length>1?'townships and boroughs':'township')+')';frag.appendChild(h)}
+    const cfrag=document.createDocumentFragment();
+    const co=cty?ctyOnly(cty):{html:'',nc:0,nn:0};
     const coll=m=>{
       const alsoIn=k=>{const o=munsOf(k).filter(z=>z!==m).map(shortN);return o.length?'<span class="also">also '+o.join(', ')+'</span>':''};
       const rows=[];
       /* land deeds */
       if(on('deeds'))D.forEach((x,ix)=>{const pm=PMAP[x[0]];if(!(pm&&pm.slice(1).includes(m))||!tfYr(x[1]))return;const named=pm[0]==='n';
-        rows.push({k:'D'+ix,id:sids().D[ix],sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
+        rows.push({k:'D'+ix,id:sids().D[ix],sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),nm:'',en:tipEsc(x[2]),ti:'Land deed',ds:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),ct:tipEsc(x[2]),ur:'',dt:String(x[1]),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
       /* Morris places: items of every kind */
       R.filter(r=>(PMAP['m:'+r.k]||[]).slice(1).includes(m)).forEach(r=>{const keep=new Set(itemsOf(r));r.items.forEach((i,ii)=>{if(!keep.has(i)||!inYr(i))return;
         const q=isRatItem(i)?'rat':isCourt(i)?'court':isMisc(i)?(isBMD(i)?'bmd':'misc'):'deeds',yy=yrsOf(i)[0]||0,named=PMAP['m:'+r.k][0]==='n';
-        rows.push({k:'M'+r.k+':'+ii,id:sids().M[r.k][ii],sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
+        rows.push({k:'M'+r.k+':'+ii,id:sids().M[r.k][ii],sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,nm:'',en:'Place '+r.k,ti:'',ds:i,ct:'',ur:'',dt:String(yy||'n.d.'),p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
       /* tax lists, census, military, court, B/M/D and miscellaneous rows for the old townships that lie in this one */
       const ks=TFKEYS_OF(m),seenT=new Set(),seenR=new Set();
       ks.forEach(k=>{const t=TF[k];
         RATS.forEach((r,ix)=>{if(!(t.rat||[]).includes(r[5])||seenR.has(ix)||!on('rat'))return;if(!(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))return;seenR.add(ix);
-          rows.push({k:'A'+ix,id:sids().A[ix],sh:true,tf:k,tw:t.n,n:r[1],y:(r[1]||'n.d.')+(r[4]?'–'+r[4]:''),q:'rat',c:r[2],d:tipEsc(r[0])+(r[3]?' <span class="im">'+tipEsc(r[3])+'</span>':''),p:tipEsc(t.n)+'<span class="bs">township only</span>'})});
+          rows.push({k:'A'+ix,id:sids().A[ix],sh:true,tf:k,tw:t.n,n:r[1],y:(r[1]||'n.d.')+(r[4]?'–'+r[4]:''),q:'rat',c:r[2],d:tipEsc(r[0])+(r[3]?' <span class="im">'+tipEsc(r[3])+'</span>':''),nm:tipEsc(r[0]),en:'',ti:'',ds:r[2],ct:r[3]?tipEsc(r[3]):'',ur:'',dt:(r[1]||'n.d.')+(r[4]?'–'+r[4]:''),p:tipEsc(t.n)+'<span class="bs">township only</span>'})});
         TLR.forEach((r,ix)=>{if(seenT.has(ix))return;if(!((t.rat||[]).includes(r[12])||(t.tn&&!r[12]&&t.tn.test(r[4]))))return;
           const q=TFLAB[r[0]]?r[0]:'misc';if(!on(q)||!tfYr(r[6]))return;seenT.add(ix);
-          rows.push({k:'T'+ix,id:sids().T[ix],sh:true,tf:k,tw:t.n,n:r[6],y:tipEsc(r[5]||r[6]||'n.d.'),q,c:tipEsc(r[2])+(r[11]?' <span class="im">'+tipEsc(r[11])+'</span>':''),d:tipEsc((r[7]+' '+r[8]).trim())+(r[9]?'. '+tipEsc(r[9]):'')+yLink(r[10]),p:tipEsc(t.n)+'<span class="bs">township only</span>'})})});
+          rows.push({k:'T'+ix,id:sids().T[ix],sh:true,tf:k,tw:t.n,n:r[6],y:tipEsc(r[5]||r[6]||'n.d.'),q,c:tipEsc(r[2])+(r[11]?' <span class="im">'+tipEsc(r[11])+'</span>':''),d:tipEsc((r[7]+' '+r[8]).trim())+(r[9]?'. '+tipEsc(r[9]):'')+yLink(r[10]),nm:tipEsc((r[7]+' '+r[8]).trim()),en:'',ti:tipEsc(r[2]),ds:tipEsc(r[9]||''),ct:tipEsc(r[11]||''),ur:r[10]||'',dt:tipEsc(r[5]||r[6]||'n.d.'),p:tipEsc(t.n)+'<span class="bs">township only</span>'})})});
       return rows};
     const plan=shPlan(all,coll);
-    /* shared blocks: shown when at least one municipality they could lie in is ticked */
+    /* Section A: records that name only the county. Placed first and open by default so a
+       visitor looking at a location sees them, per Michelle's Batch 1 Prompt 1 Step 2. */
+    if(co.html){const w=document.createElement('div');w.className='gwrap';w.innerHTML=sect('Records naming only the county',co.nc+co.nn?String(co.nc+co.nn):'')+co.html;cfrag.appendChild(w)}
+    /* Section C is assembled here but appended after Section B. */
+    const cBlocks=[];
     plan.blocks.forEach(bk=>{if(!bk.ms.some(m=>munOn.has(m)))return;
       const rows=sortRows(bk.rows.slice()),det=document.createElement('details');det.id=bk.id;det.className='shblk';
       /* data-sec: the section name the record extractor stores (tools/extract/records.mjs); made from the data, not the heading */
@@ -1022,26 +1053,38 @@ function buildYearList(){
       det.innerHTML=`<summary><span>${shTitle(bk)} <span class="shap">(${shApplies(bk)})</span></span><span class="tc">${rows.length} ${rows.length===1?'record':'records'}</span></summary>
         <div class="twb">${shHist(bk)}<p class="twh"><b>Could lie in:</b> ${bk.ms.slice().sort((p,q)=>MUN[p].n.localeCompare(MUN[q].n)).map(m=>MUN[m].n+(munOn.has(m)?'':' <i>(not ticked)</i>')).join(', ')}. These records give only the old township, so each is listed here once rather than under every modern municipality.</p>
         ${th+rows.map(tr).join('')+'</tbody></table>'}</div>`;
-      frag.appendChild(det)});
+      cBlocks.push(det)});
+    /* Section B: records tied to a specific location. */
+    const bwrap=document.createElement('div');bwrap.className='gwrap';
+    bwrap.innerHTML=sect('Records associated with specific locations',String(ids.length)+(ids.length===1?' location':' locations'));
+    cfrag.appendChild(bwrap);
     ids.forEach(m=>{
       const mu=MUN[m],det=document.createElement('details');det.id='tw-'+m;det.dataset.sec=mu.n+(cty?'':' · '+MUN_CTY[mu.c]);
       const rows=sortRows(plan.own.get(m)||[]),bs=plan.of.get(m)||[],nsh=bs.reduce((n,b)=>n+b.rows.length,0);
       const src=mu.s.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('; ');
-      det.innerHTML=`<summary><span>${mu.n}${cty?'':'<span class="cty"> · '+MUN_CTY[mu.c]+'</span>'}</span><span class="tc">${rows.length} ${rows.length===1?'record':'records'}${nsh?' + '+nsh+' shared':''}</span></summary>
+      const cc=cty||mu.c,con=coN[cc]||0;
+      det.innerHTML=`<summary><span>${mu.n}${cty?'':'<span class="cty"> · '+MUN_CTY[mu.c]+'</span>'}</span><span class="tc">${rows.length} located here${nsh?' · '+nsh+' shared':''}</span></summary>
         <div class="twb"><p class="twh"><b>History.</b> ${mu.h}</p><p class="twsrc">Sources: ${src}</p>
-        ${rows.length?th+rows.map(tr).join('')+'</tbody></table>':(nsh?'':'<p class="why2">No record in the years and record types chosen in Filters.</p>')}${shRef(bs)}</div>`;
-      frag.appendChild(det)})});
+        ${rows.length?th+rows.map(tr).join('')+'</tbody></table>':(nsh?'':'<p class="why2">No record in the years and record types chosen in Filters.</p>')}${shRef(bs)}
+        ${con?`<p class="conote">Additional records identify ${MUN_CTY[cc]} only and may be relevant to this location. <a href="#co-${cc}" data-co="${cc}">See the ${con} ${con===1?'record':'records'} naming only the county</a> &mdash; they are not included in the count above.</p>`:''}</div>`;
+      cfrag.appendChild(det)});
+    /* Section C: records that name a historical jurisdiction only. */
+    if(cBlocks.length){const cw=document.createElement('div');cw.className='gwrap';
+      cw.innerHTML=sect('Records naming historical jurisdictions only',String(cBlocks.length)+(cBlocks.length===1?' block':' blocks'));
+      cfrag.appendChild(cw);cBlocks.forEach(d=>cfrag.appendChild(d))}
+    /* State heading above the first county of each state. */
+    if(cty){const st=stOf(cty);
+      if(st!==curState){curState=st;const h2=document.createElement('h3');h2.className='stsec';h2.textContent=st;frag.appendChild(h2)}
+      const h=document.createElement('h3');h.className='sub';
+      const loc=ids.reduce((n,m)=>n+(plan.own.get(m)||[]).length,0);
+      h.innerHTML=`${MUN_CTY[cty]} <span class="im">${ids.length} ${ids.length>1?'townships and boroughs':'township'} &middot; ${loc} located &middot; ${co.nc+co.nn} county-only</span>`;
+      frag.appendChild(h)}
+    frag.appendChild(cfrag)});
   box.innerHTML='';box.appendChild(frag);
-  /* records that name only a county, or no township */
+  /* County-only records now sit inside their own county above, so this box stays empty in
+     county view. In A-Z view there are no county sections, so they are listed here. */
   let h='';
-  MUN_ORDER.forEach(c=>{if(!cActive(c)||!window.cmData)return;
-    const o=window.cmData(c),A=new Set(UNPLACED),B=new Set(UNPLACED_M);
-    const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
-    Object.keys(o).forEach(q=>o[q].forEach(x=>((A.has(x[1])||B.has(x[1]))?none:split)[q].push(x)));
-    const mk=(oo,rows2)=>chronoRows(oo).map(x=>`<tr data-rid="${x[3]}"><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`).join('');
-    const a=mk(split),b=mk(none);
-    if(a)h+=`<h3 class="sub">${MUN_CTY[c]}: records that name only the county, or no township</h3><table class="twt" data-sec="${tipEsc(MUN_CTY[c]+': records that name only the county, or no township')}"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${a}</tbody></table>`;
-    if(b)h+=`<h3 class="sub">Land and other records with no township given</h3><p class="zhint" style="margin:0 0 4px">The deed index gives no township for these, or they name no place; they are not all on the map.</p><table class="twt" data-sec="Land and other records with no township given"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${b}</tbody></table>`});
+  if(lbMode!=='county')MUN_ORDER.forEach(c=>{if(!cActive(c))return;const o=ctyOnly(c);if(o.html)h+=o.html});
   cbox.innerHTML=h;
 }
 const _allY=all;all=function(){_allY();buildYearList()};
