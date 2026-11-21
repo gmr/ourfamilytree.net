@@ -7,6 +7,8 @@
 /* Layout: surveyor's sheet — map with view + year controls on top, place register beside it; stacks on phones */
 :root{
   --bg:#f8fafc; --paper:#ffffff; --ink:#0f172a; --muted:#64748b; --rule:#e2e8f0; --body-ink:#334155; --sub-ink:#475569;
+  /* record labels on the map: the name, date and description beside a lettered marker */
+  --rec-ink:#C04A00;
   --river:#4f7fa3; --ridge:#9a8a6e; --accent:#b91c1c; --accent-soft:#b91c1c22;
   --c-land:#9b2d3c; --c-tax:#8a6a2f; --c-cen:#2a6fa8; --c-mil:#55782a; --c-court:#6b4a9a; --c-bmd:#1b857c; --c-misc:#66707a;
   --tag:#3f6b5a; --twp:#8a6a2f; --ter-ink:#6f6048; --road:#8a7556; --bound:#8d8478; --jline:#a8481f;
@@ -47,7 +49,14 @@ button:focus-visible,g.mk:focus-visible,.place:focus-visible,input:focus-visible
 label.ck{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
 details.legd{margin-top:8px;border:1px solid var(--rule);border-radius:6px;padding:6px 10px;background:var(--paper)}details.legd>summary{cursor:pointer;font:600 13px var(--f-body);color:var(--ink)}details.legd[open]>summary{margin-bottom:4px}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);margin-top:8px}
-.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend h4{flex:0 0 100%;margin:10px 0 -2px;font:600 12.5px var(--f-body);color:var(--ink)}
+.legend h4:first-child{margin-top:0}
+.legend p.lgn{flex:0 0 100%;margin:0;font-size:12.5px;line-height:1.45}
+/* each entry is a block so its text wraps normally and the icon stays inline at its own
+   size; flex-basis lets the legend run in columns on wide screens, one column on a phone */
+.legend span{display:block;flex:1 1 265px;line-height:1.45}
+.legend span>i,.legend span>svg{vertical-align:-5px;margin-right:6px;flex:none}
+.legend svg.lgring{width:26px;height:26px;flex:none;vertical-align:-8px}
 .dot{width:12px;height:12px;border-radius:50%;display:inline-block}
 .list{display:flex;flex-direction:column;gap:8px;max-height:820px;overflow:auto;padding-right:4px}
 .place{border:1px solid var(--rule);border-radius:4px;padding:9px 11px;background:var(--bg);cursor:pointer}
@@ -74,7 +83,22 @@ h2{font:600 18px var(--f-display);margin:0 0 8px}
 .tersub{font:italic 500 11px var(--f-display);fill:var(--ter-ink)}
 .terlabel{font:italic 500 11.5px var(--f-display);fill:var(--ter-ink)}
 .terbig,.tersub,.terlabel{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
-#map.zlo .zsec{display:none}
+#map.zmid .zsec{display:none}
+/* Progressive detail, three tiers set by the zoom controller (thresholds follow the map's own x1.5 zoom ladder):
+   tier 1 "overview"  (under 125%, .zlo + .zmid): township names, record counts, main rivers and terrain only
+   tier 2 "intermediate" (125-200%, .zmid):       + the coloured lettered place markers
+   tier 3 "close-up"  (200% and over, no class):  + each place's name/date label and the secondary water and terrain labels
+   Markers are only shown or hidden; no coordinate changes, so nothing moves between tiers. */
+#map.zlo g.mk.pin:not(.rson):not(.pinsel){display:none}
+#map.zmid .pinlab:not(.pinsel){display:none}
+/* a short fade as each tier appears; skipped for markers the filters or a research selection have dimmed, so their opacity is left alone */
+@keyframes zfade{from{opacity:0}}
+#map:not(.zlo) g.mk.pin:not(.dim):not(.rslo),#map:not(.zmid) .pinlab:not(.dim),#map:not(.zmid) .zsec{animation:zfade .18s ease}
+@media (prefers-reduced-motion:reduce){#map g.mk.pin,#map .pinlab,#map .zsec{animation:none}}
+/* set by the label declutter pass on a lower-priority label that has nowhere clear to sit */
+#map text.lhide{display:none}
+/* leader line tying a moved township name back to its count circle: thin and quiet */
+#map g.leads line{stroke:var(--muted);stroke-width:.9;stroke-opacity:.5;pointer-events:none}
 .ctx{font:italic 500 12px var(--f-display);fill:var(--muted)}
 .roadlabel{font:500 9.5px var(--f-mono);fill:var(--road);paint-order:stroke;stroke:var(--paper);stroke-width:3px}
 .twplabel{font:600 12px var(--f-mono);fill:var(--bound);letter-spacing:.14em;text-transform:uppercase;opacity:.75}
@@ -171,6 +195,12 @@ h4.twm{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase
 
 /* reorganized layout: nav, filter panel, tabs, reference accordion */
 html{scroll-behavior:smooth}[id]{scroll-margin-top:52px}
+/* the nav is sticky, so an anchored section stops below it instead of under it */
+#mapsec,#records,#reference,#tfsec,[id^="idx-"],[id^="rat-"]{scroll-margin-top:58px}
+/* About is the last section on the page, so without this there is nothing below it to
+   scroll against and its heading can never reach the top. This adds only the shortfall:
+   once the section's own content is this tall the rule has no effect. */
+#reference{min-height:calc(100vh - 58px)}
 .toc{position:sticky;top:0;z-index:30;display:flex;gap:4px 14px;flex-wrap:nowrap;overflow-x:auto;background:var(--bg);border-bottom:1px solid var(--rule);padding:8px 2px;margin:0;font:600 13px var(--f-body);scrollbar-width:thin}
 .toc a{color:var(--ink);text-decoration:none;white-space:nowrap;padding:2px 0;border-bottom:2px solid transparent}
 .toc a:hover,.toc a:focus-visible{border-bottom-color:var(--accent);color:var(--accent)}
@@ -295,6 +325,11 @@ h2,#filters h2.fh,details.ref>summary,#tfout h3,#pop h3,.ht th.twh{font-family:v
 #map .twplabel.wj{fill:var(--jline)}
 #map .ctx,#map .rivlabel{font-size:11px;font-weight:500;fill:var(--sub-ink);letter-spacing:0}
 #map .placelabel{font-size:11.5px;font-weight:600;fill:var(--ink)}
+/* A record label beside a lettered marker is burnt orange, so a Kent/Kint/Kindt name reads as
+   a record wherever it sits and whatever colour its own marker is. Only the fill changes: size,
+   weight, position, the declutter rules and the halo are all untouched, and township names and
+   the numbered count circles stay dark navy. */
+#map .pinlab{fill:var(--rec-ink)}
 #map .terbig,#map .tersub,#map .terlabel,#map .ridgelabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;fill:var(--muted)}
 #map .maplabel,#map .roadlabel,#map .yrlabel{font-weight:500;letter-spacing:0}
 #map .cntylabel{font-weight:700;letter-spacing:.12em}
@@ -563,33 +598,44 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
     <div id="zmsg" aria-hidden="true">Hold Ctrl (or ⌘) and scroll to zoom the map</div><svg id="map" role="img" aria-label="Map of Kent and Kint records in northern New Jersey"></svg>
     </div>
     <div id="cmbar" class="cmbar" role="group" aria-label="County-level records"></div>
-    <p class="zhint">Click a township name on the map to zoom to that township and list its records beside the map. Click a numbered township marker for a pop-up window of every record that names the township; click a lettered marker for that place's records.</p>
+    <p class="zhint">Click a township name on the map to zoom to that township and list its records beside the map. Click a numbered township marker for a pop-up window of every record that names the township; click a lettered marker for that place's records. The map shows more as you zoom in: at the opening view, township names and record counts; from 125%, the lettered place markers; from 200%, each place's name and date and the smaller stream and ridge labels. Zooming back out returns to the plainer view. The lettered places are also reachable at any zoom by picking a place in the list or selecting an individual or family group, and their records are counted in the township markers and listed in the tables below.</p>
     <div class="lstrip" aria-hidden="true"><span><i class="dot" style="background:var(--accent)"></i>Place named in the record</span><span><i class="dot" style="background:var(--tag)"></i>Approximate locality</span><span><i class="dot" style="background:var(--twp)"></i>Township only</span><span><i class="ring"></i>Township circle with record count</span><span><i class="sqk"></i>Tax list square</span></div>
     <details class="legd" id="legd"><summary>Map Legend &amp; Marker Key</summary>
     <div class="legend">
-      <span><i class="tmk">12</i>Township marker: the number is how many records name that township; click it for a pop-up window of all of them. Position is approximate (the middle of the township's named places, or its name on the map), not a lot.</span>
-      <span><i class="tmk sq">89</i>County-level records (square badge, in the bar directly below the map, not on the map): records that name only the county, or no place. Click a badge for a pop-up window of them.</span>
-      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg>Solid ring (when an individual or family group is selected): at least one <b>Proven</b> record for that selection is at this location.</span>
-      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="4 3"/></svg>Dashed ring: only <b>Probable</b> records for that selection are here.</span>
-      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="15" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="19" cy="7" r="6" fill="var(--accent)" stroke="var(--paper)" stroke-width="1.5"/><text x="19" y="10" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">3</text></svg>Small red badge: how many of the selection&rsquo;s linked records are at this location. Markers with no ring fade to a quarter strength but stay clickable. Click a ringed marker for just that selection&rsquo;s records, with a button to show everything there.</span>
-      <span>In a marker's pop-up window, a coloured dot marks each kind of record:</span>
-      <span><i class="dot" style="background:var(--c-land)"></i>Land</span><span><i class="dot" style="background:var(--c-tax)"></i>Tax Ratables/Lists</span><span><i class="dot" style="background:var(--c-cen)"></i>Census</span><span><i class="dot" style="background:var(--c-mil)"></i>Military</span><span><i class="dot" style="background:var(--c-court)"></i>Court</span><span><i class="dot" style="background:var(--c-bmd)"></i>B/M/D Records</span><span><i class="dot" style="background:var(--c-misc)"></i>Miscellaneous</span>
-      <span>Letter = Morris place. Its colour shows how firmly the place is located:</span>
-      <span><i class="dot" style="background:var(--accent)"></i>Red letter: place named in the record</span>
-      <span><i class="dot" style="background:var(--tag)"></i>Green letter: approximate locality, placed from a description</span>
-      <span><i class="dot" style="background:var(--twp)"></i>Brown letter: township only, nothing closer in the record</span>
+      <h4>Records on the map</h4>
+      <p class="lgn">Every mark on the map stands for one or more historical records naming that place. Click any marker for a pop-up window listing them.</p>
+      <span><i class="tmk">12</i><b>White numbered circle</b> &mdash; a township, and how many records name it. Placed roughly in the middle of the township, not at a specific property.</span>
+      <span><i class="tmk sq">89</i><b>Square badge</b> (in the bar below the map, not on the map) &mdash; records that name only a county, or no place at all.</span>
+      <span><i class="dot" style="background:var(--accent)"></i><b>Coloured lettered marker</b> &mdash; one specific place named in the records. Letters appear from 125% zoom, and their names and dates from 200%; you can also reach any of them from the &ldquo;Jump to place&rdquo; list at any zoom.</span>
+      <h4>What a letter&rsquo;s colour means</h4>
+      <p class="lgn">The colour says how confidently the place itself has been located &mdash; not how reliable the record is.</p>
+      <span><i class="dot" style="background:var(--accent)"></i><b>Red</b> &mdash; the record names this place</span>
+      <span><i class="dot" style="background:var(--tag)"></i><b>Green</b> &mdash; approximate, placed from a description</span>
+      <span><i class="dot" style="background:var(--twp)"></i><b>Brown</b> &mdash; township only, nothing closer given</span>
+      <span id="swleg">&#9671; Swine Field (a court case, not a deed)</span>
+      <h4>Record types</h4>
+      <p class="lgn">Inside a pop-up window, a coloured dot marks each kind of record:</p>
+      <span><i class="dot" style="background:var(--c-land)"></i>Land</span><span><i class="dot" style="background:var(--c-tax)"></i>Tax ratables &amp; lists</span><span><i class="dot" style="background:var(--c-cen)"></i>Census</span><span><i class="dot" style="background:var(--c-mil)"></i>Military</span><span><i class="dot" style="background:var(--c-court)"></i>Court</span><span><i class="dot" style="background:var(--c-bmd)"></i>Births, marriages, deaths</span><span><i class="dot" style="background:var(--c-misc)"></i>Miscellaneous</span>
+      <h4>When an individual or family group is selected</h4>
+      <p class="lgn">Choosing a person or family rings the places their records come from. Unringed markers fade but still work.</p>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg><b>Solid ring</b> &mdash; at least one <b>Proven</b> record here: a record states the connection outright.</span>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="13" cy="13" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="4 3"/></svg><b>Dashed ring</b> &mdash; <b>Probable</b> only: the evidence is indirect but points the same way.</span>
+      <span><svg class="lgring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="15" r="7" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/><circle cx="19" cy="7" r="6" fill="var(--accent)" stroke="var(--paper)" stroke-width="1.5"/><text x="19" y="10" text-anchor="middle" font-size="8" font-weight="700" fill="#fff">3</text></svg><b>Red badge</b> &mdash; how many of that selection&rsquo;s records are here.</span>
+      <h4>Rivers, roads and terrain</h4>
+      <p class="lgn">Drawn to give the records their setting. Courses are approximate and not from a survey.</p>
       <span><i class="sw r"></i>River or brook</span>
       <span><i class="sw"></i>Road or turnpike</span>
       <span><i class="sw c"></i>Morris Canal (1831)</span>
+      <span><i class="sw ter"></i>Triangles = ridge or mountain; brown tint = Highlands upland</span>
+      <span><i class="sw terw"></i>Blue-green = former Lake Passaic basin and meadows</span>
+      <span><i class="sw lfs"></i>Little Falls (outline approximate; lighter = the part taken for West Paterson in 1914)</span>
+      <h4>Historical boundaries</h4>
+      <p class="lgn">Township and county lines moved often. These show where they ran at the time, which is why a record&rsquo;s township may not match today&rsquo;s map.</p>
       <span><i class="sw b"></i>Township line, c. 1830</span>
-      <span><i class="sw jl"></i>Red line: Coxe–Barclay line, 1688. Proposed, then rescinded, so not a permanent boundary (dashed = implied course)</span>
-      <span><i class="sw jld"></i>Dotted line: Lawrence line, 1743 (approx.). The line finally accepted (NJ Supreme Court, 1855)</span>
-      <span><i class="sw wjs"></i>Red shading: the proposed West Jersey side, if the 1688 line had held (not a permanent boundary; township names in orange)</span>
-      <span><i class="sw ter"></i>Terrain (tick the box): triangles = ridge or mountain; brown tint = Highlands upland, schematic</span>
-      <span><i class="sw terw"></i>Terrain: blue-green = former Lake Passaic basin and meadows, schematic</span>
-      <span><i class="sw lfs"></i>Little Falls section (outline approximate; lighter = the part taken for West Paterson in 1914)</span>
-      <span id="swleg">◇ Swine Field (court case, not a deed)</span>
-    </div>
+      <span><i class="sw jl"></i>Red line: Coxe&ndash;Barclay line, 1688 &mdash; proposed, then rescinded, so never a lasting boundary (dashed = implied course)</span>
+      <span><i class="sw jld"></i>Dotted line: Lawrence line, 1743 (approx.) &mdash; the one finally accepted (NJ Supreme Court, 1855)</span>
+      <span><i class="sw wjs"></i>Red shading: the proposed West Jersey side had the 1688 line held (township names in orange)</span>
+      </div>
     </details>
   </section>
 

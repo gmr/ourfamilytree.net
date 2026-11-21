@@ -224,6 +224,15 @@ function proj(v){const{lat,lon,W,H}=VIEWS[v],K=Math.cos(40.85*Math.PI/180);
   return (a,b)=>[((b-lon[0])*K)*s,H-(a-lat[0])*s];}
 const path=pts=>pts.map((p,i)=>(i?'L':'M')+P(...p).map(n=>n.toFixed(1)).join(',')).join(' ');
 const txt=(x,y,t,c,anchor='start')=>{const e=el('text',{x,y,class:c,'text-anchor':anchor});e.textContent=t;return e};
+/* Visual hierarchy of the geographic background, kept in one place so it stays consistent.
+   Research records (markers, their labels, township names and count circles) are the
+   foreground and are deliberately NOT touched by these: they keep full contrast. These
+   values only soften the terrain the records sit on, and change no position or feature. */
+const G_RIV_W=.85,      /* river line width, as a fraction of the drawn width */
+      G_RIV_O=.72,      /* river line opacity */
+      G_RIDGE_O=.13,    /* tan ridge band opacity (was .2) */
+      G_CHEV_O=.5,      /* ridge chevron opacity (was .75) */
+      G_BOUND_O=.55;    /* secondary boundary line opacity */
 const lnk=(e,fn,tip)=>{if(!e)return e;e.classList.add('lk');e.addEventListener('click',ev=>{ev.stopPropagation();fn()});const ti=document.createElementNS(NS,'title');ti.textContent=tip;e.appendChild(ti);return e};
 /* ---- land deeds by present-day township: municipalities, histories, and which deed places fall in each ---- */
 const WP='https://en.wikipedia.org/wiki/';
@@ -350,17 +359,17 @@ const inPoly=(la,lo,poly)=>{let c=false;for(let i=0,j=poly.length-1;i<poly.lengt
 function drawTerrain(g,w,h){
   g.setAttribute('pointer-events','none');
   const pts=a=>a.map((p,i)=>(i?'L':'M')+P(p[0],p[1]).map(n=>n.toFixed(1)).join(',')).join(' ');
-  el('path',{d:pts(TER.hl)+'Z',fill:'var(--ridge)','fill-opacity':.13,stroke:'none'},g);
-  el('path',{d:pts(TER.hl.slice(0,15)),fill:'none',stroke:'var(--ridge)','stroke-width':1.4,'stroke-dasharray':'6 4',opacity:.9},g);
-  el('path',{d:pts(TER.lake)+'Z',fill:'var(--river)','fill-opacity':.07,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'3 4',opacity:.8},g);
-  el('path',{d:pts(TER.meadow)+'Z',fill:'var(--river)','fill-opacity':.2,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'2 3'},g);
+  el('path',{d:pts(TER.hl)+'Z',fill:'var(--ridge)','fill-opacity':.09,stroke:'none'},g);
+  el('path',{d:pts(TER.hl.slice(0,15)),fill:'none',stroke:'var(--ridge)','stroke-width':1.4,'stroke-dasharray':'6 4',opacity:.55},g);
+  el('path',{d:pts(TER.lake)+'Z',fill:'var(--river)','fill-opacity':.07,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'3 4',opacity:.6},g);
+  el('path',{d:pts(TER.meadow)+'Z',fill:'var(--river)','fill-opacity':.15,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'2 3','stroke-opacity':G_RIV_O},g);
   const s=TER.swamp,ep=[];for(let i=0;i<24;i++){const a=i/24*2*Math.PI;ep.push([s.c[0]+s.ry*Math.sin(a),s.c[1]+s.rx*Math.cos(a)])}
-  el('path',{d:pts(ep)+'Z',fill:'var(--river)','fill-opacity':.2,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'2 3'},g);
+  el('path',{d:pts(ep)+'Z',fill:'var(--river)','fill-opacity':.15,stroke:'var(--river)','stroke-width':1,'stroke-dasharray':'2 3','stroke-opacity':G_RIV_O},g);
   TER.ridges.forEach(r=>{
-    el('path',{d:pts(r),fill:'none',stroke:'var(--ridge)','stroke-width':11,'stroke-opacity':.2,'stroke-linecap':'round','stroke-linejoin':'round'},g);
+    el('path',{d:pts(r),fill:'none',stroke:'var(--ridge)','stroke-width':11,'stroke-opacity':G_RIDGE_O,'stroke-linecap':'round','stroke-linejoin':'round'},g);
     const q=r.map(p=>P(p[0],p[1]));let carry=7;
     for(let i=0;i<q.length-1;i++){const[x0,y0]=q[i],[x1,y1]=q[i+1],d=Math.hypot(x1-x0,y1-y0);let t=carry;
-      while(t<d){const x=x0+(x1-x0)*t/d,y=y0+(y1-y0)*t/d;el('path',{d:`M${(x-5).toFixed(1)},${(y+3.5).toFixed(1)}L${x.toFixed(1)},${(y-5).toFixed(1)}L${(x+5).toFixed(1)},${(y+3.5).toFixed(1)}Z`,fill:'var(--ridge)','fill-opacity':.75},g);t+=16}
+      while(t<d){const x=x0+(x1-x0)*t/d,y=y0+(y1-y0)*t/d;el('path',{d:`M${(x-5).toFixed(1)},${(y+3.5).toFixed(1)}L${x.toFixed(1)},${(y-5).toFixed(1)}L${(x+5).toFixed(1)},${(y+3.5).toFixed(1)}Z`,fill:'var(--ridge)','fill-opacity':G_CHEV_O},g);t+=16}
       carry=t-d}});
   const lab=(la,lo,t,c,an,dx,dy)=>{const[x,y]=P(la,lo);if(x>6&&x<w-6&&y>12&&y<h-6){const e=el('text',{x:x+(dx||0),y:y+(dy||0),class:c,'text-anchor':an||'start'},g);e.textContent=t}};
   lab(41.064,-74.733,'HIGHLANDS','terbig','start');lab(41.064,-74.733,'upland: ridges up to','tersub','start',0,15);lab(41.064,-74.733,'about 1,500 ft','tersub','start',0,29);
@@ -401,18 +410,18 @@ function fitTo(pts){if(!pts.length)return;const A=VIEWS.all,xy=pts.map(p=>P(Math
 /* data: served by /data.js */
 /* data: served by /data.js */
 function drawNYTer(L){const any=cs=>cs.some(c=>nyOn.has(c));
-  NYRIV.forEach(r=>{if(!any(r.c))return;el('path',{d:path(r.p),fill:'none',stroke:'var(--river)','stroke-width':r.w,'stroke-linecap':'round','stroke-linejoin':'round'});L(r.la[0],r.la[1],r.n,'rivlabel','start',6,-4)});
+  NYRIV.forEach(r=>{if(!any(r.c))return;el('path',{d:path(r.p),fill:'none',stroke:'var(--river)','stroke-width':r.w*G_RIV_W,'stroke-opacity':G_RIV_O,'stroke-linecap':'round','stroke-linejoin':'round'});L(r.la[0],r.la[1],r.n,'rivlabel','start',6,-4)});
   if(!showTer)return;
-  NYRIDGE.forEach(r=>{if(!any(r.c))return;el('path',{d:path(r.p),fill:'none',stroke:'var(--ridge)','stroke-width':11,'stroke-opacity':.2,'stroke-linecap':'round','stroke-linejoin':'round'});
+  NYRIDGE.forEach(r=>{if(!any(r.c))return;el('path',{d:path(r.p),fill:'none',stroke:'var(--ridge)','stroke-width':11,'stroke-opacity':G_RIDGE_O,'stroke-linecap':'round','stroke-linejoin':'round'});
     const q=r.p.map(p=>P(p[0],p[1]));let carry=7;
     for(let i=0;i<q.length-1;i++){const[x0,y0]=q[i],[x1,y1]=q[i+1],d=Math.hypot(x1-x0,y1-y0);let t=carry;
-      while(t<d){const x=x0+(x1-x0)*t/d,y=y0+(y1-y0)*t/d;el('path',{d:`M${(x-5).toFixed(1)},${(y+3.5).toFixed(1)}L${x.toFixed(1)},${(y-5).toFixed(1)}L${(x+5).toFixed(1)},${(y+3.5).toFixed(1)}Z`,fill:'var(--ridge)','fill-opacity':.75});t+=16}
+      while(t<d){const x=x0+(x1-x0)*t/d,y=y0+(y1-y0)*t/d;el('path',{d:`M${(x-5).toFixed(1)},${(y+3.5).toFixed(1)}L${x.toFixed(1)},${(y-5).toFixed(1)}L${(x+5).toFixed(1)},${(y+3.5).toFixed(1)}Z`,fill:'var(--ridge)','fill-opacity':G_CHEV_O});t+=16}
       carry=t-d}
     if(r.n)L(r.la[0],r.la[1],r.n,'terlabel','start',10,0)});
   NYVAL.forEach(v=>{if(any(v.c))L(v.la[0],v.la[1],v.n,'terlabel','middle')})}
 function drawNY(L){if(!nyOn.size)return;const on=c=>nyOn.has(c);drawNYTer(L);
   el('path',{d:path([[41.357,-74.694],[41.000,-73.894]]),fill:'none',stroke:'var(--bound)','stroke-width':2,'stroke-dasharray':'10 4 2 4'});if(on('Orange')||on('Rockland'))L(41.215,-74.380,'NEW JERSEY – NEW YORK LINE (approx.)','maplabel','middle');
-  const cs=new Set();nyOn.forEach(c=>(NYCOAST[c]||[]).forEach(i=>cs.add(i)));cs.forEach(i=>el('path',{d:path(NYC_COAST[i]),fill:'none',stroke:'var(--river)','stroke-width':1.6,'stroke-linejoin':'round'}));
+  const cs=new Set();nyOn.forEach(c=>(NYCOAST[c]||[]).forEach(i=>cs.add(i)));cs.forEach(i=>el('path',{d:path(NYC_COAST[i]),fill:'none',stroke:'var(--river)','stroke-width':1.6*G_RIV_W,'stroke-opacity':G_RIV_O,'stroke-linejoin':'round'}));
   if(on('Westchester')||on('Putnam')){el('path',{d:path(NYCT),fill:'none',stroke:'var(--bound)','stroke-width':2,'stroke-dasharray':'10 4 2 4'});L(41.300,-73.560,'N.Y. – CONN. LINE (approx.)','maplabel','end')}
   nyOn.forEach(c=>{const l=NYLAB[c];if(l)L(l[0],l[1],l[2],'cntylabel','middle');TFK.filter(k=>TF[k].ny&&TF[k].c===c).map(k=>[TF[k].ll[0],TF[k].ll[1],TF[k].n.replace(/ \(then .*\)/,'')]).forEach(([a,b,t])=>{const[x,y]=P(a,b);if(x<0||y<0)return;el('circle',{cx:x,cy:y,r:2.2,fill:'var(--muted)'});txt(x+5,y-5,t,'ctx')})})}
 /* towns: lat, lon, name, core? */
@@ -425,12 +434,12 @@ function draw(){tipHide();
   const L=(a,b,t,c,an,dx=0,dy=0)=>{const[x,y]=P(a,b);if(x>0&&x<W&&y>0&&y<H)return txt(x+dx,y+dy,t,c,an)};
   if(showTer){const gt=el('g',{});drawTerrain(gt,W,H)}
   if(showWJ)el('path',{d:path(WJPOLY)+'Z',fill:'var(--jline)','fill-opacity':.1,stroke:'none'});
-  RIVERS.forEach(([w,pts])=>el('path',{d:path(pts),fill:'none',stroke:'var(--river)','stroke-width':core?w:w*.85,'stroke-linecap':'round','stroke-linejoin':'round'}));
-  el('path',{d:path(POND)+'Z',fill:'var(--river)','fill-opacity':.35,stroke:'var(--river)','stroke-width':1});
+  RIVERS.forEach(([w,pts])=>el('path',{d:path(pts),fill:'none',stroke:'var(--river)','stroke-width':(core?w:w*.85)*G_RIV_W,'stroke-opacity':G_RIV_O,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  el('path',{d:path(POND)+'Z',fill:'var(--river)','fill-opacity':.28,stroke:'var(--river)','stroke-width':1,'stroke-opacity':G_RIV_O});
   drawLFZ(W,H);
-  RIDGES.forEach(p=>el('path',{d:path(p),fill:'none',stroke:'var(--ridge)','stroke-width':2,'stroke-dasharray':'2 5'}));
+  RIDGES.forEach(p=>el('path',{d:path(p),fill:'none',stroke:'var(--ridge)','stroke-width':2,'stroke-dasharray':'2 5','stroke-opacity':G_BOUND_O}));
   if(showTwp){
-    BOUNDS.forEach(p=>el('path',{d:path(p),fill:'none',stroke:'var(--bound)','stroke-width':1.6,'stroke-dasharray':'1 4','stroke-linecap':'round'}));
+    BOUNDS.forEach(p=>el('path',{d:path(p),fill:'none',stroke:'var(--bound)','stroke-width':1.6,'stroke-dasharray':'1 4','stroke-linecap':'round','stroke-opacity':G_BOUND_O}));
     TWPL.forEach(([a,b,t])=>L(a,b,t,'twplabel'+(showWJ&&inPoly(a,b,WJPOLY)?' wj':''),'middle'));
     CNTY.forEach(([a,b,t])=>L(a,b,t,'cntylabel'+(showWJ&&inPoly(a,b,WJPOLY)?' wj':''),'middle'));
   }
@@ -466,15 +475,14 @@ function draw(){tipHide();
     L(41.018,-74.492,'Green Pond','rivlabel zsec','end',-8);L(40.955,-74.535,'Burnt Meadow Br.','rivlabel zsec','end',-6);L(40.962,-74.462,'Beaver Br.','rivlabel zsec','start',8);L(40.846,-74.542,'Den Br.','rivlabel zsec','start',6,14);L(40.806,-74.462,'Whippany R.','rivlabel zsec','start',14,view==='morris'?36:30);
     if(view==='all'){L(40.960,-74.092,'Saddle R.','rivlabel','start',6);L(40.930,-74.028,'Hackensack R.','rivlabel','start',6);L(41.000,-73.925,'Hudson R.','rivlabel','end',-8);}}
   /* towns */
-  TOWNS.forEach(([a,b,t,c])=>{if(core?!c:c)return;if(!inb(a,b,4))return;const[x,y]=P(a,b);el('circle',{cx:x,cy:y,r:2.2,fill:'var(--muted)'});
+  TOWNS.forEach(([a,b,t,c])=>{if(core?!c:c)return;if(!inb(a,b,4))return;const[x,y]=P(a,b);el('circle',{class:'tdot',cx:x,cy:y,r:2.2,fill:'var(--muted)'});
     const right=x>W-150,low=(t==='Chester'||t==='Mendham'||t==='Morris Plains'||t==='Charlottenburg'||t==='Madison'||t==='Whippany'||t==='Mt Pleasant');const tlo=TLO[t];if(tlo)txt(x+tlo[0],y+tlo[1],t,'ctx',tlo[2]);else txt(x+(right?-5:t==='Parsippany'?10:5),y+(low?14:-5),t,'ctx',right?'end':'start')});
   if(view==='all')drawNY(L);
-  if(view==='all'){const[a,b]=P(40.935,-74.320),[c,d]=P(40.775,-74.095);
-    el('rect',{x:a,y:b,width:c-a,height:d-b,fill:'none',stroke:'var(--muted)','stroke-dasharray':'4 4'});txt(c-4,d+12,'Essex core view','maplabel','end');}
+
   txt(8,H-10,'Approximate positions, not to survey. N ↑','maplabel');
   /* Swine Field */
   if(courtOn&&inb(40.824,-74.306)){const[x,y]=P(40.824,-74.306);const sg=el('g',{class:'mk',tabindex:0,role:'button','aria-label':'Swine Field court case'});el('rect',{x:x-6,y:y-6,width:12,height:12,transform:`rotate(45 ${x} ${y})`,fill:'var(--paper)',stroke:'var(--accent)','stroke-width':2},sg);const sp=()=>popShow('Swine Field (court case, not a deed)',`<p>Approximate position.</p><ul><li>${SWINE}</li></ul>`,()=>{showTab('court');document.getElementById('records').scrollIntoView({behavior:'smooth',block:'start'})},'Open the Court tab');sg.addEventListener('click',sp);sg.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();sp()}});
-   if(showLbl){const rt=!core&&x>W-130;txt(x+(rt?-10:10),y+16,core?'Swine Field: Simon Kent, tenant 1766–70':'Swine Field 1766–70','yrlabel',rt?'end':'start')}}
+   if(showLbl){const rt=!core&&x>W-130;txt(x+(rt?-10:10),y+16,core?'Swine Field: Simon Kent, tenant 1766–70':'Swine Field 1766–70','yrlabel pinlab',rt?'end':'start')}}
 
   /* deed townships (one marker per township as recorded; no counts) */
   const labs=[];
@@ -506,13 +514,13 @@ function draw(){tipHide();
   if(layer!=='deeds')R.forEach(r=>{
     let[x,y]=P(r.lat,r.lon);const mo=MKOFF[r.k];if(mo){x+=mo[0];y+=mo[1]}if(x<0||x>W||y<0||y>H)return;
     const key='m:'+r.k,show=mShow(r);
-    const g=el('g',{class:'mk'+(show?'':' dim'),tabindex:0,role:'button','aria-label':r.k+': '+r.t,'data-mk':key});
+    const g=el('g',{class:'mk pin'+(show?'':' dim')+(sel===key?' pinsel':''),tabindex:0,role:'button','aria-label':r.k+': '+r.t,'data-mk':key});
     el('circle',{cx:x,cy:y,r:sel===key?14:10.5,fill:COL[r.b],stroke:sel===key?'var(--ink)':'var(--paper)','stroke-width':sel===key?3:2},g);
     const t=el('text',{x,y:y+4,'text-anchor':'middle',class:'k'},g);t.textContent=r.k;
     const goR=()=>{pick(key,true);setTimeout(()=>{const n=document.querySelector('.place.on');n&&n.scrollIntoView({block:'nearest',behavior:'smooth'})},80)};const pop=()=>{tipHide();const its=itemsOf(r).filter(inYr);popShow('Place '+r.k+': '+r.t,`<p>${BASIS[r.b]}. ${its.length} ${its.length===1?'record':'records'} in the years and record types chosen in Filters.</p><ul>${its.map(i=>`<li>${i}</li>`).join('')}</ul><p style="margin-top:8px">Source: ${r.src}</p>`,popHide,'Done')};
     g.addEventListener('click',pop);tipHook(g,()=>tipR(r));
     g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pop()}});
-    const lb=LBL[r.k];if(showLbl&&lb){const flip=x>W-190&&(lb[3]||'start')==='start';const tl=txt(x+(flip?-14:lb[1]),y+lb[2],lb[0],'placelabel'+(show?'':' dim'),flip?'end':(lb[3]||'start'));try{if(tl.getAttribute('text-anchor')==='end'&&tl.getBBox().x<4){tl.setAttribute('text-anchor','start');tl.setAttribute('x',x+Math.abs(lb[1]));tl.setAttribute('y',+tl.getAttribute('y')+6)}}catch(e){}}
+    const lb=LBL[r.k];if(showLbl&&lb){const flip=x>W-190&&(lb[3]||'start')==='start';const tl=txt(x+(flip?-14:lb[1]),y+lb[2],lb[0],'placelabel pinlab'+(show?'':' dim')+(sel===key?' pinsel':''),flip?'end':(lb[3]||'start'));try{if(tl.getAttribute('text-anchor')==='end'&&tl.getBBox().x<4){tl.setAttribute('text-anchor','start');tl.setAttribute('x',x+Math.abs(lb[1]));tl.setAttribute('y',+tl.getAttribute('y')+6)}}catch(e){}}
   });
   drawRat(W,H);
 }
@@ -579,8 +587,21 @@ const Z=(()=>{
   const rd=()=>{const v=svg.viewBox.baseVal;return[v.x,v.y,v.width,v.height]};
   let animId=null,aFrom=null,aTo=null,aStart=0,aDur=220;
   function stopAnim(){if(animId){cancelAnimationFrame(animId);animId=null}}
+  /* Progressive detail. T2/T3 are the tier thresholds: T2 keeps the existing 125% step (one press of + from 100%),
+     T3 sits at 200% so the second press of + (225%) and a pick from the place list (which zooms to 220%) both reach it.
+     H is a hysteresis margin: a tier is only left once the zoom passes the far side of the boundary, so a slow
+     pinch or wheel zoom that sits on a threshold cannot flicker between tiers. */
+  const T2=1.245,T3=2,T4=3.5,H=.06;let tier=1;
+  function tierFor(k){
+    const up=t=>t===1?(k<T2+H?1:(k<T3+H?2:(k<T4+H?3:4))):t===2?(k<T2-H?1:(k<T3+H?2:(k<T4+H?3:4))):
+      t===3?(k<T2-H?1:(k<T3-H?2:(k<T4+H?3:4))):(k<T2-H?1:(k<T3-H?2:(k<T4-H?3:4)));
+    return up(tier)}
   function render(v){svg.setAttribute('viewBox',v.map(n=>+n.toFixed(3)).join(' '));
-    lvl.textContent=Math.round(base[2]/v[2]*100)+'%';document.getElementById('zout').disabled=!vb;svg.classList.toggle('zoomed',!!vb);svg.classList.toggle('zlo',base[2]/v[2]<1.245)}
+    const k=base[2]/v[2];
+    lvl.textContent=Math.round(k*100)+'%';document.getElementById('zout').disabled=!vb;svg.classList.toggle('zoomed',!!vb);
+    const was=tier;tier=tierFor(k);svg.classList.toggle('zlo',tier===1);svg.classList.toggle('zmid',tier<3);svg.classList.toggle('zfar',tier>=4);
+    /* a new tier means a different set of labels is on the map, so lay them out again */
+    if(was!==tier&&typeof declutterSoon==='function')declutterSoon()}
   function show(){stopAnim();render(vb||base)}
   function tick(ts){if(!aStart)aStart=ts;const t=Math.min(1,(ts-aStart)/aDur),e=1-Math.pow(1-t,3);
     render([0,1,2,3].map(i=>aFrom[i]+(aTo[i]-aFrom[i])*e));
@@ -598,7 +619,21 @@ const Z=(()=>{
   let zt=0;const zm=document.getElementById('zmsg');
   svg.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey)){if(zm){zm.classList.add('on');clearTimeout(zt);zt=setTimeout(()=>zm.classList.remove('on'),1200)}return}
     e.preventDefault();const[cx,cy]=pt(e);const k=e.deltaMode?0.05:(e.ctrlKey&&Math.abs(e.deltaY)<40?0.01:0.0018);at(Math.exp(-e.deltaY*k),cx,cy,true,160)},{passive:false});
-  svg.addEventListener('pointerdown',e=>{pts.set(e.pointerId,e);
+  /* Drop any pointer the browser no longer reports as down. Without this a press that is
+     released off the map (or outside the window) leaves its id in `pts` for good, the next
+     press looks like a second finger, and from then on every drag pinch-zooms instead of
+     panning until the page is reloaded. */
+  const prune=e=>{
+    /* a mouse or pen has only one pointer down at a time, so any earlier one of that kind
+       is finished whatever we were told; a stale touch is cleared by the window listeners */
+    if(e.pointerType!=='touch')pts.forEach((q,id)=>{if(q.pointerType===e.pointerType&&id!==e.pointerId)pts.delete(id)})};
+  svg.addEventListener('pointerdown',e=>{
+    prune(e);pts.set(e.pointerId,e);
+    /* NB: the pointer is deliberately NOT captured here. Capturing on pointerdown retargets
+       the later pointer events AND the click that follows to this <svg>, so a marker's own
+       click listener never runs and its records pop-up never opens. Capture is taken only
+       once a drag has actually started (below); a press released off the map is cleaned up
+       by the prune above and by the window listeners further down. */
     if(pts.size===2){const[a,b]=[...pts.values()];pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)};drag=null;return}
     stopAnim();drag={x:e.clientX,y:e.clientY,vb:(vb||base).slice(),id:e.pointerId};moved=false});
   svg.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,e);
@@ -609,6 +644,10 @@ const Z=(()=>{
     const r=svg.getBoundingClientRect(),[x,y,w]=drag.vb;const h=drag.vb[3];set([x-dx/r.width*w,y-dy/r.height*h,w],false)});
   const end=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(drag&&drag.id===e.pointerId){drag=null;svg.classList.remove('grabbing')}};
   svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+  /* backstop: a release that happens off the map, or outside the window entirely, still
+     clears the pointer, so the map can never be left believing a finger is still down */
+  addEventListener('pointerup',end,true);addEventListener('pointercancel',end,true);
+  addEventListener('blur',()=>{pts.clear();pinch=null;if(drag){drag=null;svg.classList.remove('grabbing')}});
   svg.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false}},true);
   svg.addEventListener('dblclick',e=>{if(e.target.closest&&e.target.closest('g.mk'))return;e.preventDefault();const[cx,cy]=pt(e);at(2,cx,cy,true,240)});
   document.getElementById('zin').onclick=()=>at(1.5,...mid(),true,240);
@@ -629,6 +668,134 @@ const Z=(()=>{
   return{sync,focus,zoomTo,reset:()=>{vb=null;animateTo(base,280)}};
 })();
 
+/* ---- Label declutter -------------------------------------------------------
+   Runs after every draw and whenever the zoom tier changes (the tier decides which
+   labels are on the map at all). Everything is measured in viewBox units, which scale
+   with the map, so a layout that reads clearly at one zoom reads the same at every
+   zoom, and panning cannot change it. Markers are never moved, never hidden and never
+   measured except as obstacles: only text moves, only when it actually clashes, and a
+   label that still has nowhere to sit is hidden rather than left overlapping.
+   Priority: 1 township names (fixed, always kept) · 2 record name/date labels ·
+   3 context town names · 4 river and terrain labels (first to go). ----------- */
+const L_PAD=1.6;
+/* nudges tried in order, in viewBox units; the first clear one wins, so a label that
+   does not clash keeps exactly the position it was drawn at */
+const L_CAND=[[0,0],[0,-11],[0,11],[0,-21],[0,21],[-16,0],[16,0],[0,-31],[0,31],[-16,-12],[16,-12],[-16,12],[16,12]];
+/* township names only ever shift vertically, so they stay beside their own count circle */
+const L_TWP=[[0,0],[0,-10],[0,10],[0,-19],[0,19],[0,-28],[0,28],
+  [15,0],[-15,0],[15,-19],[-15,-19],[15,19],[-15,19],[0,-38],[0,38],[26,-28],[-26,-28],[26,28],[-26,28]];
+/* past this much displacement a township name gets a thin leader line back to its circle */
+const L_LEAD=15;
+/* extra room searched for record name/date labels, which are never hidden */
+const L_WIDE=[[0,-42],[0,42],[-30,0],[30,0],[-30,-22],[30,-22],[-30,22],[30,22],[0,-53],[0,53],[-44,0],[44,0]];
+/* the record labels' full search, ordered nearest-first so a label always takes the closest
+   clear spot to its own marker and only drifts as far as it actually has to */
+const L_REC=L_CAND.concat(L_WIDE).sort((a,b)=>Math.hypot(a[0],a[1])-Math.hypot(b[0],b[1]));
+const lHit=(a,b)=>a.x<b.x+b.w+L_PAD&&b.x<a.x+a.w+L_PAD&&a.y<b.y+b.h+L_PAD&&b.y<a.y+a.h+L_PAD;
+function lBox(e,dx,dy){try{const b=e.getBBox();if(!b||!b.width)return null;return{x:b.x+dx,y:b.y+dy,w:b.width,h:b.height}}catch(_){return null}}
+function lVis(e){try{return e.checkVisibility?e.checkVisibility():e.getClientRects().length>0}catch(_){return e.getClientRects().length>0}}
+/* 1 township names (never hidden) · 2 geographic place names · 3 record name/date labels
+   · 4 river and terrain names. Place names outrank record labels: a town is how a reader
+   orients themselves, and a record label that loses here comes back on zooming in. */
+function lRank(e){const c=e.classList;
+  if(c.contains('pinlab'))return 3;
+  if(c.contains('placelabel')||c.contains('twplabel'))return 1;
+  if(c.contains('ctx'))return 2;
+  return 4}
+/* A thin line from a moved township name back to the edge of its own count circle, so the
+   two still read as one thing. Drawn only when the name had to move; never for markers. */
+function lead(e,b){
+  const svg=document.getElementById('map');if(!svg||e.dataset.tx===undefined)return;
+  const cx=+e.dataset.tx,cy=+e.dataset.ty;
+  /* aim at the nearest point on the label box, and start just outside the circle */
+  const lx=Math.max(b.x,Math.min(cx,b.x+b.w)),ly=Math.max(b.y,Math.min(cy,b.y+b.h));
+  const d=Math.hypot(lx-cx,ly-cy);if(d<14)return;
+  const r=13.5,sx=cx+(lx-cx)/d*r,sy=cy+(ly-cy)/d*r;
+  let g=svg.querySelector('g.leads');
+  if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','leads');svg.appendChild(g)}
+  const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ln.setAttribute('x1',sx.toFixed(1));ln.setAttribute('y1',sy.toFixed(1));
+  ln.setAttribute('x2',lx.toFixed(1));ln.setAttribute('y2',ly.toFixed(1));
+  g.appendChild(ln)}
+function declutter(){
+  const svg=document.getElementById('map');if(!svg)return;
+  const lg=svg.querySelector('g.leads');if(lg)lg.remove();
+  const all=[...svg.querySelectorAll('text.placelabel,text.pinlab,text.ctx,text.rivlabel,text.terlabel,text.twplabel')];
+  /* put every label back where it was drawn, so repeated passes cannot drift */
+  all.forEach(e=>{
+    if(e.dataset.lx===undefined){e.dataset.lx=e.getAttribute('x')||'0';e.dataset.ly=e.getAttribute('y')||'0'}
+    else{e.setAttribute('x',e.dataset.lx);e.setAttribute('y',e.dataset.ly)}
+    e.classList.remove('lhide')});
+  /* obstacles: the marker shapes themselves and the small town dots. Never altered. */
+  const obst=[];
+  svg.querySelectorAll('g.mk circle,g.mk rect,circle.tdot').forEach(s=>{
+    if(!lVis(s))return;const b=lBox(s,0,0);if(b)obst.push(b)});
+  /* ---- One name per township -------------------------------------------------------
+     With the Township Boundaries layer on, a township can be named twice: inside its own
+     boundary (twplabel) and again beside its numbered record circle (placelabel). Exactly
+     one of the pair is ever shown. Up to the close-up step the name sits beside its circle,
+     where the reader is looking; from close-up the interior name is preferred, since there
+     is then room to read it within its boundary. A township whose interior label falls off
+     the drawn map has no interior label at all, so it keeps the one beside its circle. The
+     loop below adds the last condition: if the interior name has nowhere clear to sit, it
+     gives up and the name beside the circle comes back instead. -------------------------- */
+  const mate=new Map(),pair=new Map();
+  all.forEach(e=>{const k=e.dataset.tf;if(!k)return;
+    const o=pair.get(k)||{};
+    if(e.classList.contains('twplabel'))o.inside=e;else if(e.classList.contains('placelabel'))o.beside=e;
+    pair.set(k,o)});
+  const preferInside=!svg.classList.contains('zmid');
+  pair.forEach(o=>{if(!o.inside||!o.beside)return;
+    mate.set(o.inside,o.beside);mate.set(o.beside,o.inside);
+    (preferInside?o.beside:o.inside).classList.add('lhide')});
+  const items=all.filter(lVis).map(e=>({e,r:lRank(e)}));
+  items.sort((a,b)=>a.r-b.r);
+  const placed=[];
+  items.forEach(({e,r})=>{
+    /* A label the reader has just picked, or that a research selection has ringed, is
+       always kept exactly where it is, whatever else is there. */
+    if(e.classList.contains('pinsel')||e.classList.contains('rson')){
+      const b=lBox(e,0,0);if(b)placed.push(b);return}
+    /* Township names are never hidden and never move sideways, so each stays beside its
+       own count circle; they may shift a line up or down to clear a marker. */
+    if(r===1){
+      for(const[dx,dy]of L_TWP){
+        const b=lBox(e,dx,dy);if(!b)continue;
+        if(obst.some(o=>lHit(b,o))||placed.some(p=>lHit(b,p)))continue;
+        if(dx)e.setAttribute('x',+e.dataset.lx+dx);
+        if(dy)e.setAttribute('y',+e.dataset.ly+dy);
+        if(Math.hypot(dx,dy)>=L_LEAD)lead(e,b);
+        placed.push(b);return}
+      /* an interior township name with nowhere clear to sit hands back to the name beside
+         its own count circle, so the township is still named exactly once */
+      const back=mate.get(e);
+      if(back&&e.classList.contains('twplabel')){
+        e.classList.add('lhide');back.classList.remove('lhide');
+        for(const[dx,dy]of L_TWP){
+          const b=lBox(back,dx,dy);if(!b)continue;
+          if(obst.some(o=>lHit(b,o))||placed.some(p=>lHit(b,p)))continue;
+          if(dx)back.setAttribute('x',+back.dataset.lx+dx);
+          if(dy)back.setAttribute('y',+back.dataset.ly+dy);
+          if(Math.hypot(dx,dy)>=L_LEAD)lead(back,b);
+          placed.push(b);return}
+        const bb=lBox(back,0,0);if(bb)placed.push(bb);return}
+      const b=lBox(e,0,0);if(b)placed.push(b);return}
+    /* A record label may only take a spot near its own marker until the reader has zoomed
+       right in (350%+), where the map is spread out enough for a further one to stay clear.
+       So in a crowded spot it yields to the place name and returns on zooming in, instead of
+       pushing the place name off the map. */
+    const far=svg.classList.contains('zfar');
+    /* place names get the wide nearest-first search too, so a crowded one drifts a little
+       rather than dropping off the map */
+    const cands=(r===2||(r===3&&far))?L_REC:L_CAND;
+    for(const[dx,dy]of cands){
+      const b=lBox(e,dx,dy);if(!b)continue;
+      if(obst.some(o=>lHit(b,o))||placed.some(p=>lHit(b,p)))continue;
+      if(dx||dy){e.setAttribute('x',+e.dataset.lx+dx);e.setAttribute('y',+e.dataset.ly+dy)}
+      placed.push(b);return}
+    e.classList.add('lhide')})}
+let lPend=0;
+function declutterSoon(){if(lPend)return;lPend=requestAnimationFrame(()=>{lPend=0;declutter()})}
 const _draw=draw;draw=function(){_draw();Z.sync()};
 buildLandBox();buildTwpList();autoView();buildCBtns();document.getElementById('ratall').onchange=e=>{ratOn=e.target.checked;buildTwpList();all()};document.getElementById('cenall').onchange=e=>{cenOn=e.target.checked;all()};document.getElementById('milall').onchange=e=>{milOn=e.target.checked;all()};document.getElementById('courtall').onchange=e=>{courtOn=e.target.checked;buildTwpList();all()};document.getElementById('bmdall').onchange=e=>{bmdOn=e.target.checked;buildTwpList();all()};document.getElementById('miscall').onchange=e=>{miscOn=e.target.checked;buildTwpList();all()};
 
@@ -809,7 +976,10 @@ function tfGo(k,zoom){tfCur=k||'';
       
       g.addEventListener('click',()=>tmPop(k));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tmPop(k)}});
       tipHook(g,()=>`<div class="th"><span>${tipEsc(TF[k].n)}</span></div><div class="tb">${tot} ${tot===1?'record':'records'} · township only</div><ul style="list-style:none;padding-left:0">${on.map(z=>`<li><i class="cdot" style="background:var(--c-${z[3]})"></i>${z[1]}: ${o[z[0]].length}</li>`).join('')}</ul><div class="tm">Click for a window listing them all.</div>`);
-      if(showLbl&&!q[2]&&!TF[k].ny){const left=x>W-150;lnk(txt(x+(left?-18:18),y+4,tmShort(k),'placelabel',left?'end':'start'),()=>tmPop(k),'Open the records for this township')}})}
+      if(showLbl&&!q[2]&&!TF[k].ny){const left=x>W-150;const tl=lnk(txt(x+(left?-18:18),y+4,tmShort(k),'placelabel',left?'end':'start'),()=>tmPop(k),'Open the records for this township');
+        /* remember the circle this name belongs to, so the declutter pass can draw a leader
+           line back to it if the name has to move to stay clear of a marker */
+        tl.dataset.tx=x;tl.dataset.ty=y;tl.dataset.tf=k}})}
   document.getElementById('popb').addEventListener('click',e=>{const b=e.target.closest('button.go');if(!b)return;e.preventDefault();popHide();showTab(b.dataset.tab==='deeds'?'deeds':b.dataset.tab);document.getElementById('records').scrollIntoView({behavior:'smooth',block:'start'})});
   /* one square marker per county for records that name only the county, or no place */
   const CM={Essex:{n:'Essex County',ll:[40.806,-74.290]},Morris:{n:'Morris County',ll:[40.930,-74.345]},Bergen:{n:'Bergen County',ll:[40.955,-74.112]},Sussex:{n:'Sussex County',ll:[41.105,-74.630]},Passaic:{n:'Passaic County',ll:[40.945,-74.215]},Union:{n:'Union County',ll:[40.672,-74.385]},Rockland:{n:'Rockland County, N.Y.',ll:[41.150,-74.020]},Orange:{n:'Orange County, N.Y.',ll:[41.400,-74.310]},Putnam:{n:'Putnam County, N.Y.',ll:[41.430,-73.750]},Westchester:{n:'Westchester County, N.Y.',ll:[41.120,-73.780]},Bronx:{n:'Bronx County, N.Y.',ll:[40.850,-73.860]},'New York':{n:'New York County, N.Y.',ll:[40.780,-73.965]},Kings:{n:'Kings County, N.Y.',ll:[40.650,-73.950]},Queens:{n:'Queens County, N.Y.',ll:[40.710,-73.820]},Richmond:{n:'Richmond County, N.Y.',ll:[40.580,-74.150]},Nassau:{n:'Nassau County, N.Y.',ll:[40.730,-73.590]},Suffolk:{n:'Suffolk County, N.Y.',ll:[40.850,-73.450]}};
@@ -835,7 +1005,9 @@ function tfGo(k,zoom){tfCur=k||'';
       b.addEventListener('click',()=>cmPop(c));
       tipHook(b,()=>`<div class="th"><span>${CM[c].n}</span></div><div class="tb">${tot} county-only ${tot===1?'record':'records'} · no location</div><ul style="list-style:none;padding-left:0">${on.map(z=>`<li><i class="cdot" style="background:var(--c-${z[3]})"></i>${z[1]}: ${o[z[0]].length}</li>`).join('')}</ul><div class="tm">Click for a window listing them all.</div>`);
       bar.appendChild(b)})}
-  const _d=draw;draw=function(){_d();drawTM();drawCM();tfMark()};
+  /* declutter runs last, once the township circles, county markers and research rings are
+     all on the map, so the label pass sees every marker it has to keep clear of */
+  const _d=draw;draw=function(){_d();drawTM();drawCM();tfMark();declutter()};
   const _a=all;all=function(){_a();tfRender()};
   const _p=pick;pick=function(key,scroll){_p(key,scroll);if(!sel0())return;const id=key.slice(2),k=key[0]==='e'?(TF[id]?id:''):TFK.find(q=>(TF[q].pl||'').includes(id));if(k)tfGo(k,false)};
   function sel0(){return typeof sel!=='undefined'}
@@ -1207,17 +1379,38 @@ const RS=(()=>{
 (document.readyState==='loading'?document.addEventListener('DOMContentLoaded',RS.init):RS.init());
 
 /* open at the top of the page (unless the link names a section), whatever scroll position the browser remembers */
-(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}
-  let hid=null,nav='';try{nav=(performance.getEntriesByType('navigation')[0]||{}).type||''}catch(e){}
-  if(nav==='reload'&&location.hash){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
-  try{if(nav!=='reload')hid=location.hash.length>1&&document.getElementById(decodeURIComponent(location.hash.slice(1)))}catch(e){}
-  addEventListener('pagehide',()=>{try{window.scrollTo(0,0)}catch(e){}});
-  if(hid)return;let moved=false;const mark=()=>{moved=true};
-  ['wheel','touchstart','keydown','mousedown'].forEach(t=>addEventListener(t,mark,{once:true,passive:true}));
-  let own=0;const t0=Date.now();addEventListener('scroll',()=>{if(Date.now()-own>120&&Date.now()-t0>400)moved=true},{passive:true});
-  const top=()=>{if(moved)return;own=Date.now();window.scrollTo(0,0);const se=document.scrollingElement||document.documentElement;if(se)se.scrollTop=0;document.body.scrollTop=0};
-  top();requestAnimationFrame(top);setTimeout(top,150);addEventListener('load',()=>{top();setTimeout(top,300);setTimeout(top,800);setTimeout(top,1600)});try{document.fonts&&document.fonts.ready.then(()=>{top();setTimeout(top,200)})}catch(e){}
-  addEventListener('pageshow',e=>{if(e.persisted){moved=false;top();setTimeout(top,150)}})})();
+/* ---- Where the page starts -------------------------------------------------------------
+   The page must open at the heading, not part-way down at the map or the records. Content is
+   built by script after the HTML parses, so the document grows for a second or so after load;
+   without this the browser can restore an old scroll position or settle at the wrong place.
+   Two rules only, and both stop the moment the reader does anything:
+     - no hash in the address: hold the top until the page has finished growing, on a first
+       visit and on a refresh alike;
+     - a hash naming a real section (a shared link, or one of the nav links): go there, and
+       put it right again once the late content has changed the offsets. This holds on a
+       refresh too, so a link sent to someone still lands where it says it will.
+   Nothing here touches scrolling inside the map, the dropdowns or the record tables, all of
+   which scroll in their own containers. ------------------------------------------------- */
+(function(){
+  try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}
+  /* The address decides, not how the visitor arrived: a plain address opens at the top and
+     stays there on refresh; an address naming a section goes to that section, and keeps
+     going there when the page is refreshed or the link is shared. */
+  let target=null;
+  try{if(location.hash.length>1)target=document.getElementById(decodeURIComponent(location.hash.slice(1)))}catch(e){}
+  /* the reader is in charge from their first gesture or keypress */
+  let free=false;const release=()=>{free=true};
+  ['wheel','touchstart','pointerdown','keydown'].forEach(t=>addEventListener(t,release,{once:true,passive:true}));
+  const settle=()=>{
+    if(free)return;
+    if(target){const t=document.getElementById(target.id);if(t)t.scrollIntoView({block:'start'})}
+    else window.scrollTo(0,0)};
+  settle();
+  /* re-apply only while the page is still being built, then stop */
+  requestAnimationFrame(settle);
+  addEventListener('load',()=>{settle();setTimeout(settle,250);setTimeout(()=>{settle();free=true},900)});
+  /* coming back via the back button restores a built page: honour the same rule once */
+  addEventListener('pageshow',e=>{if(e.persisted){free=false;settle();setTimeout(()=>{settle();free=true},200)}})})();
 
 /* ourfamilytree.net (site mockup): the View buttons set the map view by hand (choosing counties still
    picks one automatically), and on phones the Filters button shows or hides the filter panel. */
