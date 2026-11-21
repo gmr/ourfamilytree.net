@@ -23,7 +23,10 @@ const shApplies=b=>{const q=[...new Set(b.rows.map(r=>r.q).filter(Boolean))].sor
 const shRef=(bs,noun)=>{noun=noun||['record','records'];return bs.length?`<p class="shref">Plus ${bs.map(b=>`<a href="#${b.id}" data-sh="${b.id}">${b.rows.length} shared ${b.rows.length===1?noun[0]:noun[1]}</a> in “${shTitle(b)}” (${shApplies(b)})`).join('; ')}, listed once in the shared ${bs.length>1?'blocks':'block'} for this county and not counted above.</p>`:''};
 document.addEventListener('click',e=>{const a=e.target.closest('a[data-sh]');if(!a)return;const d=document.getElementById(a.dataset.sh);if(d){e.preventDefault();d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}});
 /* county-only links from a location's notice: open the county block and go to it */
-document.addEventListener('click',e=>{const a=e.target.closest('a[data-co]');if(!a)return;const d=document.getElementById('co-'+a.dataset.co);if(d){e.preventDefault();d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}});
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-co]');if(!a)return;
+  const c=a.dataset.co,h=document.getElementById('cosec-'+c);
+  ['co-'+c,'co-np-'+c].forEach(id=>{const d=document.getElementById(id);if(d)d.open=true});
+  if(h){e.preventDefault();h.scrollIntoView({behavior:'smooth',block:'start'})}});
 /* data: served by /data.js */
 /* data: served by /data.js */
 /* data: served by /data.js */Object.entries(TG).forEach(([g,t])=>{const m=t.ids.map(i=>PL[i]);TGP[g]=[t.n,m.reduce((a,x)=>a+x[1],0)/m.length,m.reduce((a,x)=>a+x[2],0)/m.length,'deed',t.note,t.core]});
@@ -1038,7 +1041,7 @@ function buildYearList(){
     return{html,nc:a.length,nn:b.length}};
   const sect=(t,n)=>{const h=document.createElement('h4');h.className='gsec';
     h.innerHTML=t+(n?`<span class="tc">${n}</span>`:'');return h};
-  const coN={};MUN_ORDER.forEach(c=>{if(cActive(c)){const o=ctyOnly(c);coN[c]=o.nc}});
+  const coN={};MUN_ORDER.forEach(c=>{if(cActive(c)){const o=ctyOnly(c);coN[c]={nc:o.nc,nn:o.nn}}});
   let curState='';
   groups.forEach(([cty,all])=>{
     const ids=all.filter(m=>munOn.has(m));if(!ids.length)return;
@@ -1048,7 +1051,8 @@ function buildYearList(){
     const plan=shPlan(all,coll);
     /* Section A: records that name only the county. Placed first and open by default so a
        visitor looking at a location sees them, per Michelle's Batch 1 Prompt 1 Step 2. */
-    if(co.html){cfrag.appendChild(sect('Records naming only the county',co.nc+co.nn?String(co.nc+co.nn):''));
+    if(co.html){const h=sect('Records naming only the county',co.nc+co.nn?String(co.nc+co.nn):'');
+      if(cty)h.id='cosec-'+cty;cfrag.appendChild(h);
       const w=document.createElement('div');w.className='gwrap';w.innerHTML=co.html;cfrag.appendChild(w)}
     /* Section C is assembled here but appended after Section B. */
     const cBlocks=[];
@@ -1066,11 +1070,11 @@ function buildYearList(){
       const mu=MUN[m],det=document.createElement('details');det.id='tw-'+m;det.dataset.sec=mu.n+(cty?'':' · '+MUN_CTY[mu.c]);
       const rows=sortRows(plan.own.get(m)||[]),bs=plan.of.get(m)||[],nsh=bs.reduce((n,b)=>n+b.rows.length,0);
       const src=mu.s.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('; ');
-      const cc=cty||mu.c,con=coN[cc]||0;
+      const cc=cty||mu.c,cn=coN[cc]||{nc:0,nn:0},con=cn.nc+cn.nn;
       det.innerHTML=`<summary><span>${mu.n}${cty?'':'<span class="cty"> · '+MUN_CTY[mu.c]+'</span>'}</span><span class="tc">${rows.length} located here${nsh?' · '+nsh+' shared':''}</span></summary>
         <div class="twb"><p class="twh"><b>History.</b> ${mu.h}</p><p class="twsrc">Sources: ${src}</p>
         ${rows.length?th+rows.map(tr).join('')+'</tbody></table>':(nsh?'':'<p class="why2">No record in the years and record types chosen in Filters.</p>')}${shRef(bs)}
-        ${con?`<p class="conote">Additional records identify ${MUN_CTY[cc]} only and may be relevant to this location. <a href="#co-${cc}" data-co="${cc}">See the ${con} ${con===1?'record':'records'} naming only the county</a> &mdash; they are not included in the count above.</p>`:''}</div>`;
+        ${con?`<p class="conote">${cn.nc?`Additional records identify ${MUN_CTY[cc]} only and may be relevant to this location.`:''}${cn.nn?`${cn.nc?' A further '+cn.nn+' give no township at all, so no location can be read from them.':`${cn.nn} records for ${MUN_CTY[cc]} give no township at all, so no location can be read from them.`}`:''} <a href="#cosec-${cc}" data-co="${cc}">See all ${con} ${con===1?'record':'records'}</a> &mdash; none is included in the count above.</p>`:''}</div>`;
       cfrag.appendChild(det)});
     /* Section C: records that name a historical jurisdiction only. */
     if(cBlocks.length){cfrag.appendChild(sect('Records naming historical jurisdictions only',String(cBlocks.length)+(cBlocks.length===1?' block':' blocks')));
@@ -1080,7 +1084,7 @@ function buildYearList(){
       if(st!==curState){curState=st;const h2=document.createElement('h3');h2.className='stsec';h2.textContent=st;frag.appendChild(h2)}
       const h=document.createElement('h3');h.className='sub';
       const loc=ids.reduce((n,m)=>n+(plan.own.get(m)||[]).length,0);
-      h.innerHTML=`${MUN_CTY[cty]} <span class="im">${ids.length} ${ids.length>1?'townships and boroughs':'township'} &middot; ${loc} located &middot; ${co.nc+co.nn} county-only</span>`;
+      h.innerHTML=`${MUN_CTY[cty]} <span class="im">${ids.length} ${ids.length>1?'townships and boroughs':'township'} &middot; ${loc} located &middot; ${co.nc} county-only${co.nn?' &middot; '+co.nn+' no township given':''}</span>`;
       frag.appendChild(h)}
     frag.appendChild(cfrag)});
   box.innerHTML='';box.appendChild(frag);
