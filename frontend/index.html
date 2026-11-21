@@ -164,6 +164,8 @@ details.ctyblk{background:var(--cty-bg);border:1px solid var(--cty-edge);border-
 details.ctyblk>summary{font:600 13.5px var(--f-body);padding:8px 10px;display:flex;justify-content:space-between;gap:12px;align-items:baseline;cursor:pointer}
 details.ctyblk>summary .tc{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap}
 details.ctyblk>.twb{padding:0 10px 10px}
+.sortseg{align-items:center;flex-wrap:wrap}
+p.rsnone{margin:16px 0;padding:14px 16px;border:1px dashed var(--rule);border-radius:10px;color:var(--muted);font-size:13.5px;text-align:center}
 p.conote{font-size:12px;line-height:1.45;margin:6px 0 0;padding:0 0 0 8px;border-left:2px solid var(--cty-edge);background:none;color:var(--muted)}
 p.conote a{color:var(--cty-bar);text-decoration:underline;text-underline-offset:2px}
 .notes a{color:var(--accent)}
@@ -665,7 +667,7 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
 
 <section class="sheet" id="records" aria-label="Records">
   <h2>Records</h2>
-  <div class="ordbar" id="ordtop"><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div class="ordbar" id="ordtop"><div class="ordseg seg" role="group" aria-label="Browse records"><span class="arrl">Browse records:</span><button type="button" data-o="year" aria-pressed="true">Browse by Location</button><button type="button" data-o="all" aria-pressed="false">All Records</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
   <div class="tabs" role="tablist" aria-label="Record types">
     <button type="button" role="tab" data-t="deeds" aria-selected="true">Land</button>
     <button type="button" role="tab" data-t="rat" aria-selected="false" tabindex="-1">Tax Ratables/Lists</button>
@@ -675,8 +677,11 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
     <button type="button" role="tab" data-t="bmd" aria-selected="false" tabindex="-1">B/M/D Records</button>
     <button type="button" role="tab" data-t="misc" aria-selected="false" tabindex="-1">Miscellaneous</button>
   </div>
+  <div class="tp" id="p-all" role="tabpanel" hidden><p class="zhint" style="margin:0 0 6px">Every record in one chronological list, whatever its kind and wherever it is placed, earliest first and records with no date last. Each record appears once here: a record shared by several modern municipalities is not repeated. What is listed follows the record-type and year choices in Filters, and the search above. AI-assisted transcriptions; check the original.</p>
+  <div class="yrbar" id="allbar"><div class="sortseg seg" role="group" aria-label="Sort all records"><span class="arrl">Sort:</span><button type="button" data-s="old" aria-pressed="true">Oldest first</button><button type="button" data-s="new" aria-pressed="false">Newest first</button></div><span class="tc" id="allcount"></span></div>
+  <div id="alllist"></div></div>
   <div class="tp" id="p-year" role="tabpanel"><p class="zhint" style="margin:0 0 6px">Each township lists every record placed in it, <b>in order of year</b> (records with no date last), with the kind of record shown by a coloured badge in the Type column. &quot;Named place&quot; means the record names a locality and the present township is proposed from it; &quot;township only&quot; means the record gives just an old township (or county), so it is listed once, in a shaded shared block at the top of its county, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a lot lay in on the ground. What is listed follows the township, record-type and year choices in Filters. AI-assisted transcriptions; check the original.</p>
-  <div class="yrbar"><div class="rsrch" id="rsrch" role="search"><input type="search" id="rsq" placeholder="Search records by name, deed book, or place…" aria-label="Search records by name, deed book, or place" autocomplete="off"><button type="button" id="rsx" aria-label="Clear the search" hidden>×</button><span id="rsn" class="rsn" aria-live="polite"></span></div><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div class="yrbar"><div class="rsrch" id="rsrch" role="search"><input type="search" id="rsq" placeholder="Search names, dates, record types, locations, or sources…" aria-label="Search names, dates, record types, locations, or sources" autocomplete="off"><button type="button" id="rsx" aria-label="Clear the search" hidden>×</button><span id="rsn" class="rsn" aria-live="polite"></span></div><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div><div class="ordseg seg" role="group" aria-label="Browse records"><span class="arrl">Browse records:</span><button type="button" data-o="year" aria-pressed="true">Browse by Location</button><button type="button" data-o="all" aria-pressed="false">All Records</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
   <div id="yrlist"></div>
   <div id="yrcty"></div></div>
   <div class="tp" id="p-deeds" role="tabpanel" hidden><div id="twpsec">
