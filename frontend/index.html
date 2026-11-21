@@ -7,6 +7,8 @@
 /* Layout: surveyor's sheet — map with view + year controls on top, place register beside it; stacks on phones */
 :root{
   --bg:#f8fafc; --paper:#ffffff; --ink:#0f172a; --muted:#64748b; --rule:#e2e8f0; --body-ink:#334155; --sub-ink:#475569;
+  /* record labels on the map: the name, date and description beside a lettered marker */
+  --rec-ink:#C04A00;
   --river:#4f7fa3; --ridge:#9a8a6e; --accent:#b91c1c; --accent-soft:#b91c1c22;
   --c-land:#9b2d3c; --c-tax:#8a6a2f; --c-cen:#2a6fa8; --c-mil:#55782a; --c-court:#6b4a9a; --c-bmd:#1b857c; --c-misc:#66707a;
   --tag:#3f6b5a; --twp:#8a6a2f; --ter-ink:#6f6048; --road:#8a7556; --bound:#8d8478; --jline:#a8481f;
@@ -323,6 +325,11 @@ h2,#filters h2.fh,details.ref>summary,#tfout h3,#pop h3,.ht th.twh{font-family:v
 #map .twplabel.wj{fill:var(--jline)}
 #map .ctx,#map .rivlabel{font-size:11px;font-weight:500;fill:var(--sub-ink);letter-spacing:0}
 #map .placelabel{font-size:11.5px;font-weight:600;fill:var(--ink)}
+/* A record label beside a lettered marker is burnt orange, so a Kent/Kint/Kindt name reads as
+   a record wherever it sits and whatever colour its own marker is. Only the fill changes: size,
+   weight, position, the declutter rules and the halo are all untouched, and township names and
+   the numbered count circles stay dark navy. */
+#map .pinlab{fill:var(--rec-ink)}
 #map .terbig,#map .tersub,#map .terlabel,#map .ridgelabel{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;fill:var(--muted)}
 #map .maplabel,#map .roadlabel,#map .yrlabel{font-weight:500;letter-spacing:0}
 #map .cntylabel{font-weight:700;letter-spacing:.12em}
