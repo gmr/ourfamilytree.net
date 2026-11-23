@@ -41,6 +41,9 @@ just parity                  # By-year records of the running site vs seed/recor
 - Record entries live only in the datasets (D, RATS, TLR, UNPLACED, UNPLACED_M, R), never in `app.js`.
   Correcting an entry changes its id, so `import-seed` refuses to remove a record that has
   assignments: unassign (or move) them first. Research cannot be attached to a removed record.
+- **A deploy does not touch the data.** The database is the source of truth; nothing is wiped and
+  repopulated on a push. Research is changed through the MCP server, and `import-seed` is a manual
+  command (`just seed` locally), run only when the datasets themselves change.
 - Crates: `oft-domain` (data.js writer, research JSON v1/v2, validation), `oft-db` (sqlx runtime
   queries, migrations in `crates/oft-db/migrations`), `oft-api` (Axum server, CLI, OAuth, MCP).
 - MCP: `rmcp` streamable HTTP at `/mcp`, behind `auth::require_bearer`. The app is its own OAuth 2.1

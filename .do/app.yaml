@@ -36,25 +36,6 @@ ingress:
         exact: ""
       path:
         prefix: /
-jobs:
-- dockerfile_path: /Dockerfile
-  envs:
-  - key: DATABASE_URL
-    scope: RUN_TIME
-    value: ${ourfamilytree.DATABASE_URL}
-  - key: DATABASE_CA_CERT
-    scope: RUN_TIME
-    value: ${ourfamilytree.CA_CERT}
-  github:
-    branch: main
-    deploy_on_push: true
-    repo: gmr/ourfamilytree.net
-  instance_count: 1
-  instance_size_slug: apps-s-1vcpu-1gb-fixed
-  kind: PRE_DEPLOY
-  name: seed
-  run_command: oft-api import-seed
-  source_dir: /
 name: ourfamilytree
 region: nyc
 services:

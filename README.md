@@ -18,7 +18,11 @@ Connect an MCP client to `http://localhost:8080/mcp`. For example, in Claude Cod
 ## Deploy (DigitalOcean App Platform)
 
 The app is described by `.do/app.yaml`. App Platform builds the Dockerfile from `main` on every
-push, runs `oft-api import-seed` before each deploy, and serves HTTPS for `ourfamilytree.net`.
+push and serves HTTPS for `ourfamilytree.net`.
+
+A deploy does not touch the data. The database is the source of truth: research is changed through
+the MCP server, and `oft-api import-seed` is a manual command, run only when the datasets
+themselves change.
 
 1. Managed Postgres cluster `ourfamilytree`, database `oft` owned by user `oft` (`ALTER DATABASE oft OWNER TO oft; ALTER SCHEMA public OWNER TO oft;` as `doadmin`, in database `oft`).
 2. Google Cloud console: OAuth client of type "Web application" with the redirect URIs
