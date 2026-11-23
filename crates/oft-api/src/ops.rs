@@ -84,8 +84,17 @@ pub async fn import(
     };
     let mut stored_as: HashMap<Uuid, Uuid> = HashMap::new();
     let mut saved = known_profiles.clone();
+    let mut seen_legacy = std::collections::HashSet::new();
 
     for ip in &set.profiles {
+        // Two profiles with one old id would later resolve to one stored profile, so keep the first.
+        if let Some(l) = &ip.legacy_id
+            && !seen_legacy.insert(l)
+        {
+            rep.unmatched_assignments
+                .push(json!({"profile": l, "problem": "duplicate profile id; skipped"}));
+            continue;
+        }
         let stored = ip.legacy_id.as_ref().and_then(|l| old_profiles.get(l));
         if let Some(&s) = stored {
             stored_as.insert(ip.profile.id, s);
@@ -107,12 +116,15 @@ pub async fn import(
         for a in &ip.assignments {
             let mut rec = None;
             if let Some(id) = a.record_id {
-                rec = oft_db::record(&mut tx, &id.to_string()).await?;
+                rec = oft_db::record(&mut tx, &id.to_string())
+                    .await?
+                    .filter(|r| r.status == "active");
             }
             if rec.is_none() && !a.legacy_hash.is_empty() {
-                rec = oft_db::record(&mut tx, &a.legacy_hash).await?;
+                rec = oft_db::record(&mut tx, &a.legacy_hash)
+                    .await?
+                    .filter(|r| r.status == "active");
             }
-            rec = rec.filter(|r| r.status == "active");
             if rec.is_none() {
                 rec = oft_db::record_by_snapshot(&mut tx, &a.snapshot).await?;
                 if rec.is_some() {

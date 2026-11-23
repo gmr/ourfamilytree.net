@@ -151,6 +151,15 @@ pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64,
         }
     }
     let hashes: Vec<&str> = rows.iter().map(|r| r.legacy_hash.as_str()).collect();
+    // Lock the records to remove before the check. `put_assignment` takes FOR SHARE on its record,
+    // so an assignment either commits before this lock (and the check sees it) or waits and then
+    // sees the record as removed.
+    sqlx::query(
+        "SELECT 1 FROM record WHERE status='active' AND NOT legacy_hash = ANY($1) FOR UPDATE",
+    )
+    .bind(&hashes)
+    .execute(&mut *c)
+    .await?;
     // A changed source entry gets a new id. Research on the old record would then point at a row
     // the page no longer shows, so refuse until the assignments are moved or removed.
     let orphans: Vec<(String, String, String)> = sqlx::query_as(
@@ -537,7 +546,7 @@ async fn put_assignment(
 ) -> Result<()> {
     let n = sqlx::query(
         "INSERT INTO assignment (profile_id, record_id, confidence, explanation, snapshot, created_by)
-         SELECT $1,$2,$3,$4,$5,$6 WHERE EXISTS (SELECT 1 FROM record WHERE id=$2 AND status='active')
+         SELECT $1,$2,$3,$4,$5,$6 WHERE EXISTS (SELECT 1 FROM record WHERE id=$2 AND status='active' FOR SHARE)
          ON CONFLICT (profile_id, record_id) DO UPDATE SET confidence=$3, explanation=$4, snapshot=$5, updated_at=now()",
     )
     .bind(profile)
