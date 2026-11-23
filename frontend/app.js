@@ -994,8 +994,25 @@ function sids(){if(SIDS)return SIDS;
 const on=q=>TFT.find(x=>x[0]===q)[2]();
 const th='<table class="twt rec5"><thead><tr><th>Date</th><th>Name / Record</th><th>Type</th><th>Brief description</th><th class="vdh">View</th></tr></thead><tbody>';
 const mkOf=r=>{const o=[];if(r.pk)o.push('m:'+r.pk);if(r.k&&r.k[0]==='D'&&D[+r.k.slice(1)]){const pid=D[+r.k.slice(1)][0];Object.keys(TF).forEach(k=>{if((TF[k].tg||[]).some(g=>TG[g].ids.includes(pid)))o.push('t:'+k)})}if(r.tf)o.push('t:'+r.tf);return o.join(',')};
-const tr=r=>`<tr data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.y}</td><td class="t">${tbg(r.q)}</td><td class="b">${r.c||'\u2014'}</td><td>${r.d}</td><td>${r.p}</td></tr>`;
-const sortRows=a=>a.sort((p,q)=>(p.n||9999)-(q.n||9999));
+/* Expanded detail row. It carries the canonical citation, details and place in canon-* spans,
+   which is where the record extractor reads them from, so the compact row above can be reworded. */
+const dRow=r=>{const bits=[];
+  if(r.ti&&r.ti!==r.nm)bits.push(`<div class="df"><dt>Record</dt><dd>${r.ti}</dd></div>`);
+  bits.push(`<div class="df"><dt>Citation</dt><dd class="canon-c">${r.c||'\u2014'}</dd></div>`);
+  bits.push(`<div class="df"><dt>Details</dt><dd class="canon-d">${r.d||'\u2014'}</dd></div>`);
+  bits.push(`<div class="df"><dt>Place</dt><dd class="canon-p">${r.p||'\u2014'}</dd></div>`);
+  if(r.ur)bits.push(`<div class="df"><dt>Document</dt><dd><a href="${r.ur}" target="_blank" rel="noopener">${/library\/books/.test(r.ur)?'View the book':'View the image'}</a></dd></div>`);
+  return `<tr class="det" hidden><td colspan="5"><dl class="dets">${bits.join('')}</dl></td></tr>`};
+const tr=r=>`<tr class="rec" data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.dt||r.y}</td><td class="nm">${r.nm||r.en||'\u2014'}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||r.d||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRow(r);
+let recSort='date';
+const rsTxt=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&[a-z]+;/g,' ').trim().toLowerCase();
+const sortRows=a=>a.sort((p,q)=>{
+  if(recSort==='name'){const x=rsTxt(p.nm||p.en),y=rsTxt(q.nm||q.en);
+    if(!x!==!y)return x?-1:1; if(x!==y)return x<y?-1:1}
+  else if(recSort==='type'){const x=TFLAB[p.q]||'',y=TFLAB[q.q]||'';if(x!==y)return x<y?-1:1}
+  const a1=p.n||0,b1=q.n||0;
+  if(!a1!==!b1)return a1?-1:1;            /* undated last, whatever the sort */
+  return a1-b1});
 const coll=m=>{
   const alsoIn=k=>{const o=munsOf(k).filter(z=>z!==m).map(shortN);return o.length?'<span class="also">also '+o.join(', ')+'</span>':''};
   const rows=[];
@@ -1117,10 +1134,10 @@ function buildAllList(){
        county, so these are taken in order. They are deliberately NOT deduplicated by their
        text: two separate records can read identically, and collapsing them would repeat the
        record-id fault rather than count what is there. */
-    chronoRows(window.cmData(c)).forEach(x=>extra.push({n:x[0]||0,y:x[0]||'n.d.',q:x[1],html:x[2],cty:c}))});
+    chronoRows(window.cmData(c)).forEach(x=>extra.push({n:x[0]||0,y:x[0]||'n.d.',q:x[1],html:x[2],id:x[3]||'',cty:c}))});
   const all=rows.map(r=>({n:r.n,q:r.q,row:tr(r)}))
     .concat(extra.map(e=>({n:e.n,q:e.q,
-      row:`<tr><td class="y">${e.y}</td><td class="t">${tbg(e.q)}</td><td colspan="2">${e.html}</td><td>${MUN_CTY[e.cty]}<span class="bs">county only</span></td></tr>`})));
+      row:`<tr${e.id?` data-rid="${e.id}"`:''}><td class="y">${e.y}</td><td class="t">${tbg(e.q)}</td><td colspan="2">${e.html}</td><td>${MUN_CTY[e.cty]}<span class="bs">county only</span></td></tr>`})));
   all.sort((p,q)=>{const a=p.n||0,b=q.n||0;
     if(!a!==!b)return a?-1:1;              /* undated always last, both directions */
     return allSort==='new'?b-a:a-b});
@@ -1133,7 +1150,30 @@ document.addEventListener('click',e=>{const b=e.target.closest('#allbar .sortseg
   allSort=b.dataset.s;document.querySelectorAll('#allbar .sortseg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.s===allSort));
   buildAllList()});
 
-const _allY=all;all=function(){_allY();buildYearList();buildAllList()};
+/* ---- Compact / Expanded, and per-record expansion ---------------------------------- */
+let viewMode='compact';
+function applyView(root){(root||document).querySelectorAll('tr.rec').forEach(r=>{
+  const d=r.nextElementSibling,b=r.querySelector('button.vdb');
+  if(!d||!d.classList.contains('det'))return;
+  const open=viewMode==='expanded';
+  d.hidden=!open;r.classList.toggle('open',open);
+  if(b){b.setAttribute('aria-expanded',String(open));b.textContent=open?'Hide':'Details'}})}
+function setView(v){viewMode=v;
+  document.querySelectorAll('.viewseg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+  applyView()}
+function setRecSort(v){recSort=v;
+  document.querySelectorAll('.recsort button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rs===v)));
+  buildYearList();buildAllList();applyView();if(typeof rsRun==='function')rsRun()}
+document.addEventListener('click',e=>{
+  const v=e.target.closest('.viewseg button');if(v&&v.dataset.v){setView(v.dataset.v);return}
+  const s2=e.target.closest('.recsort button');if(s2&&s2.dataset.rs){setRecSort(s2.dataset.rs);return}
+  const b=e.target.closest('button.vdb');if(!b)return;
+  const row=b.closest('tr.rec'),d=row&&row.nextElementSibling;
+  if(!d||!d.classList.contains('det'))return;
+  const open=d.hidden;d.hidden=!open;row.classList.toggle('open',open);
+  b.setAttribute('aria-expanded',String(open));b.textContent=open?'Hide':'Details'});
+
+const _allY=all;all=function(){_allY();buildYearList();buildAllList();applyView()};
 setOrd('year');
 all();
 
