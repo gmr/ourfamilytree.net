@@ -47,75 +47,7 @@ function tipE(id,p,r){const n=6;
 /* data: served by /data.js */
 /* people from the tax ratables (Pequannock ratable books and the ratable notes in the Morris records): township only, no lot */
 /* data: served by /data.js */
-RATS.forEach(r=>{if(!r[5])r[5]='pequannock'});
-/* Caldwell Twp. (Essex Co.), Books 504-512, and Acquackanonk Twp. Book 498: from the project's ratable transcriptions (tax-ratables/*.md). Names as written; "(D)" etc. kept in the entry text. Books for 1816-1819 are not in the project. */
-const cw=(n,y,t,b)=>RATS.push([n,y,t,b,null,'caldwell']);
-cw('Elias Kent',1810,'"Kent Elias": 52 ac, value 15; 1 horse, 4 cattle; $2.06','504 (J–K)');cw('Daniel Kent',1810,'"Kent Daniel": 22 ac, value 8; 1 horse; 90¢','504 (J–K)');cw('David Kent',1810,'60 ac, value 20; 2 horses, 4 cattle; $3.17','504 (J–K)');cw('William Kent',1810,'10 ac, value 5; 2 horses; 43¢','504 (J–K)');cw('Elias Kent',1810,'"Kent D Elias": 15 ac, value 6; 2 horses; $1 (cents blank)','504 (J–K)');cw('Jonathan Kent',1810,'no land; 1 horse; 30¢','504 (J–K)');
-cw('Elias Kent',1811,'52 ac, value 16; 2 horses, 2 cattle; $2.22','505 p. 10');cw('David Kent',1811,'60 ac, value 20; 2 horses, 4 cattle; $3.32','505 p. 10');cw('Daniel Kent',1811,'"Kent Daniel": 22 ac, value 10; 2 cattle; $1.20','505 p. 10');cw('William Kent',1811,'10 ac, value 5; 2 cattle; 70¢','505 p. 11');cw('Elias Kent',1811,'"Kent D Elias": 2 ac, value 5; $1.00','505 p. 11');cw('Jonathan Kent',1811,'householder; 30¢','505 p. 11');
-cw('Elias Kent',1812,'22 ac as transcribed (52 ac in 1810–1811), value 16; 2 horses, 5 cattle; $2.68','506 p. 10');cw('David Kent',1812,'60 ac, value 20; 2 horses, 3 cattle; $3.34','506 p. 10');cw('Daniel Kent (widow)',1812,'"Kent Daniel widow": 22 ac, value 10; $1.00','506 p. 10');cw('Isaac Kent',1812,'20 ac, value 6; 1 cattle; 75¢','506 p. 11');cw('William Kent',1812,'10 ac, value 5; 2 cattle; 74¢','506 p. 11');cw('Elias Kent',1812,'"Kent D Elias": no land; 1 horse; 47¢','506 p. 11');cw('Jonathan Kent',1812,'no land; 56¢','506 p. 11');
-cw('David Kent',1813,'60 ac, value 20; 2 horses, 4 cattle; $2.52','507 p. 9');cw('Daniel Kent (widow)',1813,'"Kent Daniels widow": 22 ac, value 9; 1 cattle; 90¢','507 p. 9');cw('Isaac Kent',1813,'20 ac, value 7; 2 cattle; 82¢','507 p. 10');cw('William Kent',1813,'householder; 2 horses; 49¢','507 p. 10');cw('Jonathan Kent',1813,'householder; 30¢','507 p. 10');cw('Jacob Kent',1813,'householder; 55¢','507 p. 10');
-cw('David Kent',1814,'60 ac, value 20; 2 horses, 4 cattle; $3.20','508 p. 10');cw('Daniel Kent (widow)',1814,'"Kent Daniels widow": 22 ac, value 9; 1 cattle; $1.12','508 p. 10');cw('Isaac Kent',1814,'22 ac, value 8; 88¢','508 p. 10');cw('William Kent',1814,'11 ac, 1 house lot, value 4; 74¢','508 p. 10');cw('Jonathan Kent',1814,'householder; 40¢','508 p. 10');
-cw('David Kent',1815,'60 ac, value 20; 3 horses, 4 cattle; $2.54','509 p. 10');cw('Daniel Kent (widow)',1815,'"Kent Daniel widow": 22 ac, value 8; 1 cattle; 74¢','509 p. 10');cw('Isaac Kent',1815,'22 ac, value 9; 2 horses, 5 cattle; $1.18','509 p. 10');cw('William Kent',1815,'10 ac, 1 house lot, value 4; 2 cattle; 52¢','509 p. 10');cw('Jonathan Kent',1815,'householder; 1 horse; 45¢','509 p. 10');
-cw('David Kent',1820,'107 ac, value 26; 3 horses, 2 cattle; $4.18','510 p. 10');cw('Daniel Kent (estate)',1820,'"Kent Daniel Estate": 22 ac, value 6; 78¢','510 p. 10');cw('Isaac Kent',1820,'20 ac, value 9; 2 horses, 1 cattle; $1.67','510 p. 10');cw('William Kent',1820,'14 ac, value 4; 2 cattle; 72¢','510 p. 10');cw('Jonathan Kent',1820,'householder; 1 cattle; 47¢; margin note "see end of list where there is a Lewis Kent"','510 p. 10');cw('Lewis Kent',1820,'single man; 80¢','510 pp. 17–18');
-cw('David Kent',1821,'107 ac, value 26; 2 horses, 3 cattle; $3.49','511 p. 9');cw('Daniel Kent (widow)',1821,'"Kent Daniels widow": 22 ac, value 6; 66¢','511 p. 9');cw('Isaac Kent',1821,'20 ac, value 9; 2 horses, 3 cattle; $1.64','511 p. 10');cw('William Kent',1821,'14 ac, value 4; 2 cattle; 62¢','511 p. 10');cw('Jonathan Kent',1821,'householder; 31¢','511 p. 10');cw('Lewis Kent',1821,'single man; 75¢','511 p. 17');
-cw('Moses Kent Jr.',1822,'"Kent Moses Junior": single man; 80¢','512 p. 10');cw('Lewis Kent',1822,'single man; 80¢','512 p. 10');cw('John Kent',1822,'"Kent G. John": 35 ac, value 7; 1 cattle; $1.15','512 p. 10');cw('David Kent',1822,'117 ac, value 26; 2 horses, 3 cattle; $4.98','512 p. 10');cw('Daniel Kent (widow)',1822,'"Kent Smiel[iel] widow" (reading uncertain): 22 ac, value 6; 78¢','512 p. 10');cw('Frederick Kent',1822,'single man; 81¢','512 p. 10');cw('Isaac Kent',1822,'28 ac, value 9; 1 horse, 5 cattle; $1.97','512 p. 10');cw('William Kent',1822,'14 ac, value 4; 2 cattle; 72¢','512 p. 11');cw('Jonathan Kent',1822,'householder; 37¢','512 p. 11');cw('Jacob Kent',1822,'5 ac, value 3; $2.55 as transcribed','512 p. 15');
-RATS.push(['George W. Kent',1820,'"George W Kent": householder; 65¢','498 p. 7',null,'acquackanonk'],['Jacob Kent',1820,'"Jacob Kent B J": 2½ ac; 16¢ ("B J" is an annotation, reproduced as written)','498 p. 16',null,'acquackanonk'],['Levy Kent',1820,'"Levy Kent B J": 2½ ac; 16¢ ("B J" as written)','498 p. 17',null,'acquackanonk']);
-
-/* Compiler's research notes: "Tax Ratables" rows (Kent/Kint only), Essex Co. townships not covered by the project's ratable books. Names and acreage as in the workbook; book and page not recorded. */
-const WB='';
-const wb=(k,n,y,t)=>RATS.push([n,y,t,WB,null,k]);
-[[1779,'Henry Kent (Kint)','40 ac'],[1779,'Jacob Kent (Kint)','0 ac'],[1779,'Simeon Kent (Kint)','20 ac'],
- [1782,'Hendrick Kent (Kint)','20 ac'],[1782,'Jacob Kent (Kint)','0 ac'],[1782,'Simeon Kent (Kint)','20 ac'],
- [1783,'Hendrick Kent','20 ac'],[1783,'Jacob Kent','0 ac'],[1783,'Simeon Kent (Kint)','20 ac'],
- [1789,'Jacob (?) Kent','10 ac'],[1789,'Hendrick Kent (Kint)','40 ac'],
- [1790,'Jacob Kent','30 ac'],[1790,'Henry Kent (Kint)','10 ac (the workbook\'s other sheet shows "?")'],
- [1793,'Jacob Kent','30 ac'],[1793,'Henry Kent (Kint)','no land listed'],[1793,'John Kent (Kint)','no land listed'],
- [1795,'Jacob Kent','45 ac'],[1795,'John Kent','0 ac'],
- [1796,'Jacob Kent (Kint)','40 ac'],
- [1810,'Jacob Jr. Kent (Kint)','0 ac'],[1810,'Levi & brother Kent (Kint)','10 ac']
-].forEach(a=>wb('newark',a[1],a[0],a[2]));
-[[1780,'David Kent','0 ac'],[1780,'Elias Kent','44 ac'],[1781,'David Kent (Kint)','50 ac'],[1782,'David Kent (Kit?)','90 ac'],[1783,'David Kent','30 ac'],[1789,'David Kent','100 ac'],
- [1796,'David Kent','60 ac'],[1796,'Moses Kent','20 ac'],[1796,'William Kent','0 ac'],[1814,'Jacob Kent','0 ac'],[1821,'George W. Kent','0 ac']
-].forEach(a=>wb('acquackanonk',a[1],a[0],a[2]));
-[[1820,'Aaron Kent','18 ac (compiler’s note: "appears to be a duplicate")'],[1820,'Elias J. Kent','0 ac'],[1820,'Jacob Jr. Kent','130 ac'],[1820,'Joseph Kent','acreage cell holds a date, not a number'],[1820,'Levy Kent','28 ac'],
- [1821,'Aaron Kent','10 ac'],[1821,'Elias J. Kent','0 ac'],[1821,'Jacob Jr. Kent','100 ac'],[1821,'Joseph Kent','"0?"'],[1821,'Levy Kent','20 ac'],
- [1822,'Aaron Kent','10 ac'],[1822,'Elias J. Kent','0 ac'],[1822,'Jacob Kent','138 ac'],[1822,'Joseph Kent','acreage cell holds a date, not a number'],[1822,'Levi Kent','40 ac']
-].forEach(a=>wb('bloomfield',a[1],a[0],a[2]));
-[[1813,'Elias Kent','58 ac'],[1813,'Joseph Kent','20 ac'],[1813,'Simeon Kent','40 ac'],[1815,'Elias Kent','60 ac'],
- [1821,'Elias Kent','97 ac'],[1821,'Joseph Kent','2 ac'],[1821,'Rhoda Kent','12 ac (compiler’s note: "appears to be a duplicate")']
-].forEach(a=>wb('livingston',a[1],a[0],a[2]));
-wb('springfield','William Kent',1795,'18 ac (compiler’s note: "Can\'t find in digital book")');
-RATS.push(['Moses Kint',1822,'acreage not read (compiler’s note: "can\'t read it")','',null,'pequannock']);
-
-/* "Tax List, Vol. 2" rows (NJ State Archives; names only, no acreage): all Essex Co. rows, plus the Morris, Bergen and Sussex rows done so far. Year 0 = date not recorded. */
-const tl=(k,n,y,m,note)=>RATS.push([n,y,'tax list'+(m?', '+m:'')+', name only'+(note?' ('+note+')':''),WB,null,k]);
-[[1774,'Aug','Hendrick Kent'],[1779,'Jan','Henry Kent (Kint)'],[1779,'Jan','Jacob Kent (Kint)'],[1779,'Jan','Simeon Kent (Kint)'],
- [1780,'Oct','Henry Kent'],[1780,'Oct','Jacob Kent (Kint)'],[1780,'Oct','Simeon Kent (Kint)'],
- [1781,'Jul','Henry Kent'],[1781,'Jul','Jacob Kent'],[1781,'Jul','Simeon Kent'],
- [1782,'Mar','Benajah Kent'],[1782,'Mar','Hendrick Kent'],[1782,'Mar','Henry Kent'],[1782,'Mar','Jacob Kent'],[1782,'Mar','Simeon Kent'],
- [1783,'Oct','Hendrick Kent'],[1783,'Oct','Jacob Kent'],[1783,'Oct','Simeon Kent'],
- [1789,'Jul','Hendrick Kent'],[1790,'Jul','Henry Kent'],[1790,'Jul','Jacob Kent'],
- [1793,'Jun','Henry Kent'],[1793,'Jun','Henry Kent','compiler’s note: "Duplicate?"'],[1793,'Jun','Jacob Kent'],[1793,'Jun','John Kent'],
- [1795,'Aug','Jacob Kent'],[1795,'Aug','John Kent'],[1796,'Jun','Jacob Kent'],
- [1810,'Aug','Jacob Jr. Kent'],[1810,'Aug','Levy Kent'],[1811,'Sep','Jacob Kent'],[1811,'Sep','John Kent'],[1811,'Sep','Seoy Kent'],
- [1822,'','Jacob Kent','year in the compiler’s notes reads "1822?"'],[0,'','Simeon Kent','compiler’s note: "check dates"']
-].forEach(a=>tl('newark',a[2],a[0],a[1],a[3]));
-tl('horseneck','Hendrick Kent',1782,'Mar');
-tl('essexnos','Jacob Kent',1781,'Jul','compiler’s note: "Double-check year. Duplicate?"');
-[['David Kent'],['Jacob, Jr. Kent'],['Jerry Kent (Kint)'],['Jonathan Kent (Kint)'],['Moses Kent (Kint)'],['Simon Kent (Kint)']].forEach(a=>tl('essexnos',a[0],1793,'Jun'));
-tl('westfield','Abram Kent (Kint)',1811,'Sep');tl('westfield','Abram Kent (Kint)',1813,'Jul');tl('westfield','Abram Kent',1814,'Jul');
-tl('newprov','Abram Kent',1812,'Oct');
-tl('livingston','Elias Kent',1813,'Jul');tl('livingston','Elias Kent',1814,'Jul');tl('livingston','Elias Kent',1815,'Sep');tl('livingston','Elias Kent',1815,'Sep','compiler’s note: "DUPLICATE?"');
-[[1784,'May','Jacob Kent'],[1785,'Jun','Jacob Kent'],[1785,'Jun','William Kent'],[1786,'Jun','Jacob Kent (Kintt)'],[1787,'Jul','Jacob Kent (Kintt)'],[1788,'Jul','Jacob Kent (Kint)'],[1790,'Mar','Jacob Kent']
-].forEach(a=>tl('hanover',a[2],a[0],a[1]));
-tl('pequannock','Simon Kent (Kint)',1793,'Jun');
-tl('saddle','William Kent',1786,'Jun');
-[0,0,0,0].forEach(()=>tl('saddle','Cornelius Kent',0,'','one of four undated entries'));
-tl('franklin','James Kent (Kint)',1793,'Jun','compiler’s note: James Kent m. Catherine Parliman');
-tl('newtown','Simon Kent',1793,'Jun');
-/* tax lists (not ratable books), from the Morris notes and Timeline */
-RATS.push(['Marinas Kint',1791,'no acreage or stock; 1 riding chair; tax 0 2 6 / 0 2 6 / 0 0 11 (Saddle River Precinct)','140 p. 17/18',null,'saddle'],['Corn. Kint',1796,'householder; 1 cattle; tax 0 2 3 / 0 2 3 / 0 1 1','144 p. 14',null,'saddle'],['Corn. Kint',1797,'8 ac improved, 11 unimproved; 2 cattle; tax 0 0 6 / 0 1 10 / 0 0 11','145 p. 10',null,'saddle']);
-RATS.push(['Simeon Kent',1791,'Hanover tax list and census (tax list, not a ratable book; Timeline)','',null,'hanover'],['Caleb Kint',1793,'Pequannock tax list and militia (tax list, not a ratable book; Timeline)','',null,'pequannock']);
+/* RATS (in the dataset) holds every tax row, including Caldwell Books 504-512, Acquackanonk Book 498, the workbook "Tax Ratables" rows, "Tax List, Vol. 2" and the Morris and Timeline tax lists. Keep record data in datasets, not in this script. */
 /* data: served by /data.js */
 /* data: served by /data.js */
 Object.assign(RTW,RTWX);

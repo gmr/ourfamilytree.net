@@ -62,7 +62,13 @@ for (const r of result.rows) {
 const byId = new Map();
 for (const r of result.rows) {
   const o = byId.get(r.id);
-  if (o) o.sections.includes(r.section) || o.sections.push(r.section);
+  if (o) {
+    // A cross-reference shows the same source entry, so its row must say the same thing.
+    for (const f of ['y', 't', 'c', 'd', 'p', 'mk']) {
+      if (JSON.stringify(o[f]) !== JSON.stringify(r[f])) errors.push(`record ${r.id}: ${f} differs between sections ${o.sections[0]} and ${r.section}`);
+    }
+    o.sections.includes(r.section) || o.sections.push(r.section);
+  }
   else byId.set(r.id, { ...r, sections: [r.section], section: undefined });
 }
 fs.writeFileSync(out, JSON.stringify({ errors, range: result.range, rowCount: result.rows.length, records: [...byId.values()] }, null, 1));
