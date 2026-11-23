@@ -17,7 +17,7 @@ just seed                    # load seed/ into the database (safe to re-run)
 just serve                   # site + MCP on :8080
 just ci                      # fmt-check, clippy -D warnings, unit tests
 just smoke                   # MCP end-to-end test (server must run with DEV_LOGIN_EMAIL set)
-just parity                  # By-year rows and map SVG of the running site vs the v114 page
+just parity                  # By-year records of the running site vs seed/records.json
 ```
 
 ## Architecture
