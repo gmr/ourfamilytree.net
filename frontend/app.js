@@ -1085,12 +1085,14 @@ function buildYearList(){
     /* shared blocks: shown when at least one municipality they could lie in is ticked */
     plan.blocks.forEach(bk=>{if(!bk.ms.some(m=>munOn.has(m)))return;
       const rows=sortRows(bk.rows.slice()),det=document.createElement('details');det.id=bk.id;det.className='shblk';
+      /* data-sec: the section name the record extractor stores (tools/extract/records.mjs); made from the data, not the heading */
+      det.dataset.sec=shTitle(bk)+' ('+shApplies(bk)+')';
       det.innerHTML=`<summary><span>${shTitle(bk)} <span class="shap">(${shApplies(bk)})</span></span><span class="tc">${rows.length} ${rows.length===1?'record':'records'}</span></summary>
         <div class="twb">${shHist(bk)}<p class="twh"><b>Could lie in:</b> ${bk.ms.slice().sort((p,q)=>MUN[p].n.localeCompare(MUN[q].n)).map(m=>MUN[m].n+(munOn.has(m)?'':' <i>(not ticked)</i>')).join(', ')}. These records give only the old township, so each is listed here once rather than under every modern municipality.</p>
         ${th+rows.map(tr).join('')+'</tbody></table>'}</div>`;
       frag.appendChild(det)});
     ids.forEach(m=>{
-      const mu=MUN[m],det=document.createElement('details');det.id='tw-'+m;
+      const mu=MUN[m],det=document.createElement('details');det.id='tw-'+m;det.dataset.sec=mu.n+(cty?'':' · '+MUN_CTY[mu.c]);
       const rows=sortRows(plan.own.get(m)||[]),bs=plan.of.get(m)||[],nsh=bs.reduce((n,b)=>n+b.rows.length,0);
       const src=mu.s.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('; ');
       det.innerHTML=`<summary><span>${mu.n}${cty?'':'<span class="cty"> · '+MUN_CTY[mu.c]+'</span>'}</span><span class="tc">${rows.length} ${rows.length===1?'record':'records'}${nsh?' + '+nsh+' shared':''}</span></summary>
@@ -1106,8 +1108,8 @@ function buildYearList(){
     Object.keys(o).forEach(q=>o[q].forEach(x=>((A.has(x[1])||B.has(x[1]))?none:split)[q].push(x)));
     const mk=(oo,rows2)=>chronoRows(oo).map(x=>`<tr data-rid="${x[3]}"><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`).join('');
     const a=mk(split),b=mk(none);
-    if(a)h+=`<h3 class="sub">${MUN_CTY[c]}: records that name only the county, or no township</h3><table class="twt"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${a}</tbody></table>`;
-    if(b)h+=`<h3 class="sub">Land and other records with no township given</h3><p class="zhint" style="margin:0 0 4px">The deed index gives no township for these, or they name no place; they are not all on the map.</p><table class="twt"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${b}</tbody></table>`});
+    if(a)h+=`<h3 class="sub">${MUN_CTY[c]}: records that name only the county, or no township</h3><table class="twt" data-sec="${tipEsc(MUN_CTY[c]+': records that name only the county, or no township')}"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${a}</tbody></table>`;
+    if(b)h+=`<h3 class="sub">Land and other records with no township given</h3><p class="zhint" style="margin:0 0 4px">The deed index gives no township for these, or they name no place; they are not all on the map.</p><table class="twt" data-sec="Land and other records with no township given"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${b}</tbody></table>`});
   cbox.innerHTML=h;
 }
 const _allY=all;all=function(){_allY();buildYearList()};

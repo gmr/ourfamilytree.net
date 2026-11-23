@@ -42,11 +42,9 @@ const result = await page.evaluate(() => {
     return { id: tr.dataset.rid, legacy: FN(parts.join('|').toLowerCase()), y: parts[0], t: parts[1] || '', c: parts[2] || '', d: parts.slice(3).join(' '), p: pl, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
   }
   const section = (tr) => {
-    const d = tr.closest('details');
-    if (d) return d.querySelector('summary > span')?.textContent.replace(/\s+/g, ' ').trim() || d.id;
-    let h = tr.closest('table')?.previousElementSibling;
-    while (h && h.tagName !== 'H3') h = h.previousElementSibling;
-    return h ? h.textContent.trim() : '';
+    // The page writes the section name in data-sec, from the data, so a heading change cannot change it.
+    const s = tr.closest('[data-sec]');
+    return s ? s.dataset.sec.replace(/\s+/g, ' ').trim() : null;
   };
   const y0 = document.getElementById('y0'), y1 = document.getElementById('y1');
   const rows = [...document.querySelectorAll('#p-year tbody tr')].map((tr) => {
@@ -57,7 +55,10 @@ const result = await page.evaluate(() => {
 });
 await browser.close();
 
-for (const r of result.rows) if (!r.id) errors.push(`row without a record id: ${r.y} | ${r.t} | ${r.c}`);
+for (const r of result.rows) {
+  if (!r.id) errors.push(`row without a record id: ${r.y} | ${r.t} | ${r.c}`);
+  if (r.section == null) errors.push(`row without a section (data-sec): ${r.id}`);
+}
 const byId = new Map();
 for (const r of result.rows) {
   const o = byId.get(r.id);
