@@ -112,7 +112,7 @@ g.mk text.c{font:600 10.5px var(--f-mono);fill:var(--paper);pointer-events:none}
 g.mk.dim{opacity:.15}
 .empty{color:var(--muted);font-size:13px}
 .mapbox{position:relative}#zmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#000b;color:#fff;font:600 13px var(--f-body);padding:8px 14px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:3;text-align:center;max-width:80%}#zmsg.on{opacity:1}
-.zbar{position:sticky;top:8px;z-index:3;width:max-content;max-width:calc(100% - 16px);margin:8px 8px -44px auto;flex-wrap:wrap;justify-content:flex-end;user-select:none;-webkit-user-select:none;display:flex;gap:4px;align-items:center;background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:3px;z-index:2;box-shadow:0 1px 3px #0002}
+.zbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0 0 8px;padding:4px 6px;user-select:none;-webkit-user-select:none;background:var(--paper);border:1px solid var(--rule);border-radius:8px}
 .zbar button{font:600 14px var(--f-body);min-width:30px;height:28px;border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:4px;cursor:pointer;padding:0 8px}
 .zbar button:disabled{opacity:.4;cursor:default}
 .zbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
@@ -153,6 +153,38 @@ g.mk text.k{font:600 11px var(--f-mono);fill:var(--paper);pointer-events:none}
 .ctx{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
 .rivlabel{paint-order:stroke;stroke:var(--paper);stroke-width:3px}
 h3.sub{font:600 14px var(--f-body);margin:12px 0 4px}
+/* Records tab geographic hierarchy: state > county > section > location > records */
+h3.stsec{font:650 17px var(--f-body);margin:22px 0 2px;padding-bottom:4px;border-bottom:2px solid var(--rule);letter-spacing:.01em}
+h3.stsec:first-child{margin-top:4px}
+h3.sub .im{font:500 12px var(--f-mono);color:var(--muted);margin-left:6px}
+h4.gsec{scroll-margin-top:72px;font:600 12.5px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 4px;display:flex;gap:10px;align-items:baseline}
+h4.gsec .tc{font:500 12px var(--f-mono);text-transform:none;letter-spacing:0}
+.gwrap{margin:0}
+details.ctyblk{background:var(--cty-bg);border:1px solid var(--cty-edge);border-left:4px solid var(--cty-bar);border-radius:10px;margin:4px 0}
+details.ctyblk>summary{font:600 13.5px var(--f-body);padding:8px 10px;display:flex;justify-content:space-between;gap:12px;align-items:baseline;cursor:pointer}
+details.ctyblk>summary .tc{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap}
+details.ctyblk>.twb{padding:0 10px 10px}
+.sortseg{align-items:center;flex-wrap:wrap}
+.viewseg,.recsort{align-items:center;flex-wrap:wrap}
+table.twt.rec5 td.nm{font-weight:600;color:var(--ink)}
+table.twt.rec5 td.bd{color:var(--muted)}
+table.twt.rec5 th.vdh,table.twt.rec5 td.vd{width:1%;white-space:nowrap;text-align:right}
+button.vdb{font:500 12px var(--f-body);padding:3px 9px;border:1px solid var(--rule);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+button.vdb:hover{color:var(--ink);border-color:var(--cty-edge)}
+button.vdb[aria-expanded="true"]{background:var(--cty-bg);color:var(--ink);border-color:var(--cty-edge)}
+tr.det>td{background:var(--cty-bg);border-left:3px solid var(--cty-bar);padding:10px 12px}
+dl.dets{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:13px}
+dl.dets .df{display:contents}
+dl.dets dt{font:600 11.5px var(--f-body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+dl.dets dd{margin:0;color:var(--ink)}
+@media (max-width:640px){
+  button.vdb{min-height:44px;min-width:44px;padding:11px 16px;font-size:13px}
+  table.twt.rec5 th.vdh,table.twt.rec5 td.vd{text-align:left}
+  dl.dets{grid-template-columns:1fr;gap:2px 0}
+  dl.dets dt{margin-top:6px}}
+p.rsnone{margin:16px 0;padding:14px 16px;border:1px dashed var(--rule);border-radius:10px;color:var(--muted);font-size:13.5px;text-align:center}
+p.conote{font-size:12px;line-height:1.45;margin:6px 0 0;padding:0 0 0 8px;border-left:2px solid var(--cty-edge);background:none;color:var(--muted)}
+p.conote a{color:var(--cty-bar);text-decoration:underline;text-underline-offset:2px}
 .notes a{color:var(--accent)}
 .lb-top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0 10px}
 .lb-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px 20px}
@@ -400,8 +432,8 @@ body.hasbar{padding-bottom:var(--asbh,150px)}
 .lgring{vertical-align:-6px;margin-right:4px}
 
 /* ===== ourfamilytree.net: layout and type from the site mockup (plans/design) ===== */
-:root{--f-head:'Space Grotesk','Inter',sans-serif;--field:#cbd5e1;--panel-alt:#f1f5f9;--shared-bg:#fdf8ee;--shared-ink:#5c4513;--link:#9b1c1c;--link-hover:#7f1d1d}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--field:#3f4d47;--panel-alt:#222c28;--shared-bg:#29261b;--shared-ink:#e3cfa0;--link:#f08a96;--link-hover:#f6b0b8}}
+:root{--f-head:'Space Grotesk','Inter',sans-serif;--field:#cbd5e1;--panel-alt:#f1f5f9;--shared-bg:#fdf8ee;--shared-ink:#5c4513;--link:#9b1c1c;--link-hover:#7f1d1d;--cty-bg:#eef2f7;--cty-edge:#9fb3c8;--cty-bar:#5b7f9e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--field:#3f4d47;--panel-alt:#222c28;--shared-bg:#29261b;--shared-ink:#e3cfa0;--link:#f08a96;--link-hover:#f6b0b8;--cty-bg:#212b31;--cty-edge:#4a5f6e;--cty-bar:#7ea6c4}}
 :root[data-theme="dark"]{--field:#3f4d47;--panel-alt:#222c28;--shared-bg:#29261b;--shared-ink:#e3cfa0;--link:#f08a96;--link-hover:#f6b0b8}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-sans)}
 body a{color:var(--link)}body a:hover{color:var(--link-hover)}
@@ -461,7 +493,9 @@ body aside#filters .lb-cols{max-height:320px;overflow:auto}
 body #mapsec{border-radius:12px;padding:0;border:0;background:none;display:flex;flex-direction:column;gap:12px}
 body .mapbox{border:1px solid var(--rule);border-radius:12px;background:var(--paper);overflow:hidden}
 body #map{display:block}
-body .zbar{position:absolute;right:12px;top:12px;z-index:3;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:60%;background:none;border:0;padding:0;box-shadow:none}
+body .zbar{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;max-width:100%;margin:0 0 10px;padding:6px 8px;background:var(--panel-alt);border:1px solid var(--rule);border-radius:10px;box-shadow:none}
+body .zbar #zreset,body .zbar #zwide{margin-left:auto}
+@media (max-width:640px){body .zbar{flex-direction:row;flex-wrap:wrap;gap:4px;padding:5px 6px;justify-content:flex-start}body .zbar #zreset,body .zbar #zwide{margin-left:0}body .zbar button{min-width:34px;height:32px}}
 body .zbar button{min-width:44px;min-height:44px;border:1px solid var(--field);border-radius:8px;background:var(--paper);color:var(--ink);font:600 14px var(--f-sans)}
 body .zbar output{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid var(--field);border-radius:8px;background:var(--paper);font:600 12px var(--f-sans)}
 body #zmsg{left:12px;top:12px;right:auto;transform:none;padding:6px 10px;border-radius:8px;background:var(--paper);border:1px solid var(--rule);font-size:12px;color:var(--body-ink)}
@@ -503,9 +537,9 @@ body #records .sub{font:600 18px var(--f-head);margin:20px 0 10px}
   body aside#filters{display:none;max-width:none;flex-basis:100%}
   body.fopen aside#filters{display:flex}
   .mainc{flex-basis:100%}
-  body .zbar{max-width:none;left:auto;flex-direction:column}
+  body .zbar{max-width:none;flex-direction:row;flex-wrap:wrap;justify-content:flex-start}
   body .zbar #pl,body .zbar #pr,body .zbar #pu,body .zbar #pd,body .zbar #zlvl{display:none}
-  body .zbar{top:8px;right:8px;gap:4px}body .zbar button{min-width:36px;min-height:36px;font-size:13px}
+  body .zbar{gap:4px}body .zbar button{min-width:36px;min-height:36px;font-size:13px}
   body #pop{align-items:flex-end;padding:0}
   body #pop>*{border-radius:16px 16px 0 0;max-height:80vh;width:100%;max-width:none}
 }
@@ -594,7 +628,8 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
 <div class="mainc">
 <div class="grid">
   <section class="sheet" id="mapsec" aria-label="Map">
-    <div class="mapbox"><div class="zbar" role="group" aria-label="Zoom"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button></div>
+    <div class="zbar" role="group" aria-label="Map controls"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button></div>
+    <div class="mapbox">
     <div id="zmsg" aria-hidden="true">Hold Ctrl (or ⌘) and scroll to zoom the map</div><svg id="map" role="img" aria-label="Map of Kent and Kint records in northern New Jersey"></svg>
     </div>
     <div id="cmbar" class="cmbar" role="group" aria-label="County-level records"></div>
@@ -652,7 +687,7 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
 
 <section class="sheet" id="records" aria-label="Records">
   <h2>Records</h2>
-  <div class="ordbar" id="ordtop"><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div class="ordbar" id="ordtop"><div class="ordseg seg" role="group" aria-label="Browse records"><span class="arrl">Browse records:</span><button type="button" data-o="year" aria-pressed="true">Browse by Location</button><button type="button" data-o="all" aria-pressed="false">All Records</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div><div class="viewseg seg" role="group" aria-label="Record detail"><span class="arrl">Records:</span><button type="button" data-v="compact" aria-pressed="true">Compact</button><button type="button" data-v="expanded" aria-pressed="false">Expanded</button></div><div class="recsort seg" role="group" aria-label="Sort records"><span class="arrl">Sort by:</span><button type="button" data-rs="date" aria-pressed="true">Date</button><button type="button" data-rs="name" aria-pressed="false">Name</button><button type="button" data-rs="type" aria-pressed="false">Type</button></div></div>
   <div class="tabs" role="tablist" aria-label="Record types">
     <button type="button" role="tab" data-t="deeds" aria-selected="true">Land</button>
     <button type="button" role="tab" data-t="rat" aria-selected="false" tabindex="-1">Tax Ratables/Lists</button>
@@ -662,12 +697,15 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
     <button type="button" role="tab" data-t="bmd" aria-selected="false" tabindex="-1">B/M/D Records</button>
     <button type="button" role="tab" data-t="misc" aria-selected="false" tabindex="-1">Miscellaneous</button>
   </div>
-  <div class="tp" id="p-year" role="tabpanel"><p class="zhint" style="margin:0 0 6px">Each township lists every record placed in it, <b>in order of year</b> (records with no date last), with the kind of record shown by a coloured badge in the Type column. &quot;Named place&quot; means the record names a locality and the present township is proposed from it; &quot;township only&quot; means the record gives just an old township (or county), so it is listed once, in a shaded shared block at the top of its county, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a lot lay in on the ground. What is listed follows the township, record-type and year choices in Filters. AI-assisted transcriptions; check the original.</p>
-  <div class="yrbar"><div class="rsrch" id="rsrch" role="search"><input type="search" id="rsq" placeholder="Search records by name, deed book, or place…" aria-label="Search records by name, deed book, or place" autocomplete="off"><button type="button" id="rsx" aria-label="Clear the search" hidden>×</button><span id="rsn" class="rsn" aria-live="polite"></span></div><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div><div class="ordseg seg" role="group" aria-label="Order records"><span class="arrl">Order records:</span><button type="button" data-o="year" aria-pressed="true">By year</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div></div>
+  <div class="tp" id="p-all" role="tabpanel" hidden><p class="zhint" style="margin:0 0 6px">Every record in one chronological list, whatever its kind and wherever it is placed, earliest first and records with no date last. Each record appears once here: a record shared by several modern municipalities is not repeated. What is listed follows the record-type and year choices in Filters, and the search above. AI-assisted transcriptions; check the original.</p>
+  <div class="yrbar" id="allbar"><div class="sortseg seg" role="group" aria-label="Sort all records"><span class="arrl">Sort:</span><button type="button" data-s="old" aria-pressed="true">Oldest first</button><button type="button" data-s="new" aria-pressed="false">Newest first</button></div><div class="viewseg seg" role="group" aria-label="Record detail"><span class="arrl">Records:</span><button type="button" data-v="compact" aria-pressed="true">Compact</button><button type="button" data-v="expanded" aria-pressed="false">Expanded</button></div><div class="recsort seg" role="group" aria-label="Sort records"><span class="arrl">Sort by:</span><button type="button" data-rs="date" aria-pressed="true">Date</button><button type="button" data-rs="name" aria-pressed="false">Name</button><button type="button" data-rs="type" aria-pressed="false">Type</button></div><span class="tc" id="allcount"></span></div>
+  <div id="alllist"></div></div>
+  <div class="tp" id="p-year" role="tabpanel"><p class="zhint" style="margin:0 0 6px">Each township lists every record placed in it, <b>in order of year</b> (records with no date last), with the kind of record shown by a coloured badge in the Type column. &quot;Named place&quot; means the record names a locality and the present township is proposed from it; &quot;township only&quot; means the record gives just an old township (or county), so it is listed once, in a shared block under &quot;Records naming historical jurisdictions only&quot; at the foot of its county, below the specific locations, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a lot lay in on the ground. What is listed follows the township, record-type and year choices in Filters. AI-assisted transcriptions; check the original.</p>
+  <div class="yrbar"><div class="rsrch" id="rsrch" role="search"><input type="search" id="rsq" placeholder="Search names, dates, record types, locations, or sources…" aria-label="Search names, dates, record types, locations, or sources" autocomplete="off"><button type="button" id="rsx" aria-label="Clear the search" hidden>×</button><span id="rsn" class="rsn" aria-live="polite"></span></div><div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div><div class="ordseg seg" role="group" aria-label="Browse records"><span class="arrl">Browse records:</span><button type="button" data-o="year" aria-pressed="true">Browse by Location</button><button type="button" data-o="all" aria-pressed="false">All Records</button><button type="button" data-o="type" aria-pressed="false">By record type</button></div><div class="viewseg seg" role="group" aria-label="Record detail"><span class="arrl">Records:</span><button type="button" data-v="compact" aria-pressed="true">Compact</button><button type="button" data-v="expanded" aria-pressed="false">Expanded</button></div><div class="recsort seg" role="group" aria-label="Sort records"><span class="arrl">Sort by:</span><button type="button" data-rs="date" aria-pressed="true">Date</button><button type="button" data-rs="name" aria-pressed="false">Name</button><button type="button" data-rs="type" aria-pressed="false">Type</button></div></div>
   <div id="yrlist"></div>
   <div id="yrcty"></div></div>
   <div class="tp" id="p-deeds" role="tabpanel" hidden><div id="twpsec">
-  <p class="zhint" style="margin:0 0 6px">Each township lists the deeds placed in it and the history of the township or borough. "Named place" means the record names a locality and the present township is proposed from it; "township only" means the record gives just an old township, so it is listed once, in a shaded shared block at the top of its county, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a deed lot lay in on the ground. Deeds come from the Deed workbook, plus eleven Essex, Bergen, Passaic and Sussex deeds and mortgages added from the compiler’s own transcription files (those rows give the book and pages as the file does; book letters are not visible on the images). Morris County records are the lettered places. Morris places D (estate division), K (a will) and R (church baptisms) are not land deeds and are not filtered by the box.</p>
+  <p class="zhint" style="margin:0 0 6px">Each township lists the deeds placed in it and the history of the township or borough. "Named place" means the record names a locality and the present township is proposed from it; "township only" means the record gives just an old township, so it is listed once, in a shared block under &quot;Records naming historical jurisdictions only&quot; at the foot of its county, below the specific locations, and each present township it could lie in gives a cross-reference to that block. Nothing here shows which township a deed lot lay in on the ground. Deeds come from the Deed workbook, plus eleven Essex, Bergen, Passaic and Sussex deeds and mortgages added from the compiler’s own transcription files (those rows give the book and pages as the file does; book letters are not visible on the images). Morris County records are the lettered places. Morris places D (estate division), K (a will) and R (church baptisms) are not land deeds and are not filtered by the box.</p>
   <div class="arr seg" role="group" aria-label="Arrange townships"><span class="arrl">Arrange townships:</span><button type="button" data-m="county" aria-pressed="true">By county</button><button type="button" data-m="az" aria-pressed="false">A–Z</button></div>
   <div id="twplist"></div>
   <div id="nodeeds" style="scroll-margin-top:48px">
