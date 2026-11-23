@@ -39,7 +39,25 @@ const result = await page.evaluate(() => {
     const parts = (cells.length >= 5 ? cells.slice(0, -1) : cells).map(txt);
     let pl = '';
     if (cells.length >= 5) { const lc = cells[cells.length - 1], f = lc.firstChild; pl = ((f && f.nodeType === 3 ? f.textContent : lc.textContent) || '').replace(/\s+/g, ' ').trim(); }
-    return { id: tr.dataset.rid, legacy: FN(parts.join('|').toLowerCase()), y: parts[0], t: parts[1] || '', c: parts[2] || '', d: parts.slice(3).join(' '), p: pl, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
+    // The compact row shows a shortened date, name and description, so the citation, details and
+    // place are read from the canon-* spans in the expanded row beneath it, and the year and type
+    // from their own cell classes. Nothing here depends on which column a value happens to sit in,
+    // so the table can be reordered or reworded without changing what the importer stores.
+    const det = tr.nextElementSibling && tr.nextElementSibling.classList.contains('det') ? tr.nextElementSibling : null;
+    if (!det) {
+      // County-only rows keep the original three-cell layout and have no expanded row.
+      return { id: tr.dataset.rid, legacy: FN(parts.join('|').toLowerCase()), y: parts[0], t: parts[1] || '', c: parts[2] || '', d: parts.slice(3).join(' '), p: pl, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
+    }
+    const canon = (sel) => { const e = det.querySelector(sel); return e ? (e.textContent || '').replace(/\s+/g, ' ').trim() : ''; };
+    const cell = (sel, fb) => { const e = tr.querySelector(sel); return e ? txt(e) : fb; };
+    // The place badge ("named place", "township only") is a child element, as it was in the
+    // original last column, so only the leading text node is the place itself.
+    const place = () => { const e = det.querySelector('.canon-p'); if (!e) return pl; const f = e.firstChild; return ((f && f.nodeType === 3 ? f.textContent : e.textContent) || '').replace(/\s+/g, ' ').trim(); };
+    const y = cell('td.y', parts[0]), t = cell('td.t', parts[1] || '');
+    const c = canon('.canon-c'), d = canon('.canon-d'), p = place();
+    // legacy keeps the v114 row-text id: that layout's first four columns were year, type,
+    // citation and details, so it is rebuilt from the canonical values, not from the new cells.
+    return { id: tr.dataset.rid, legacy: FN([y, t, c, d].join('|').toLowerCase()), y, t, c, d, p, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
   }
   const section = (tr) => {
     // The page writes the section name in data-sec, from the data, so a heading change cannot change it.
@@ -47,7 +65,8 @@ const result = await page.evaluate(() => {
     return s ? s.dataset.sec.replace(/\s+/g, ' ').trim() : null;
   };
   const y0 = document.getElementById('y0'), y1 = document.getElementById('y1');
-  const rows = [...document.querySelectorAll('#p-year tbody tr')].map((tr) => {
+  // tr.det is the expanded half of the row above it, not a record of its own.
+  const rows = [...document.querySelectorAll('#p-year tbody tr:not(.det)')].map((tr) => {
     const i = rowInfo(tr);
     return i && { ...i, section: section(tr), year: (/(1[6-9]\d\d)/.exec(i.y) || [])[1] || null };
   }).filter(Boolean);
