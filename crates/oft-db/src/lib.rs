@@ -115,7 +115,7 @@ pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64,
         .join(" ");
         if let Some(text_hash) = &r.text_hash {
             sqlx::query(
-                "UPDATE record SET legacy_hash=$1, text_hash=$2 WHERE legacy_hash=$2
+                "UPDATE record SET legacy_hash=$1 WHERE legacy_hash=$2
                    AND NOT EXISTS (SELECT 1 FROM record WHERE legacy_hash=$1)",
             )
             .bind(&r.legacy_hash)
