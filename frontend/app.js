@@ -979,6 +979,9 @@ const TFKEYS_OF=m=>TFK.filter(k=>{const t=TF[k];if(t.ny||t.off)return false;
   if((t.tg||[]).some(g=>TG[g]&&TG[g].ids.some(id=>(PMAP[id]||[]).slice(1).includes(m))))return true;
   if((t.pl||'').split('').some(p=>(PMAP['m:'+p]||[]).slice(1).includes(m)))return true;return false});
 const yLink=u=>u?' <a href="'+u+'" target="_blank" rel="noopener">'+(/library\/books/.test(u)?'book':'image')+'</a>':'';
+/* A record with no name field shows a neutral label for its kind, never an identifier.
+   Deed books and FamilySearch arks stay in Citation and Details. */
+const RECLAB={deeds:'Land deed',rat:'Tax entry',cen:'Census entry',mil:'Military record',court:'Court record',bmd:'B/M/D record',misc:'Record'};
 /* Record ids. An id comes from the source entry (its list and its data), not from the text a table
    shows, so a change to a table cannot change the id. A row that shows one entry in more than one
    place has the same id each time. Identical entries in one list get "-2", "-3" in list order. */
@@ -989,7 +992,7 @@ function sids(){if(SIDS)return SIDS;
   return SIDS={D:D.map(x=>id('D',x)),A:RATS.map(x=>id('A',x)),T:TLR.map(x=>id('T',x)),U:UNPLACED.map(x=>id('U',x)),V:UNPLACED_M.map(x=>id('V',x)),
     M:Object.fromEntries(R.map(r=>[r.k,r.items.map(i=>id('M'+r.k,i))]))}}
 const on=q=>TFT.find(x=>x[0]===q)[2]();
-const th='<table class="twt"><thead><tr><th>Year</th><th>Type</th><th>Citation / deed</th><th>Parties / details</th><th>Place on the map</th></tr></thead><tbody>';
+const th='<table class="twt rec5"><thead><tr><th>Date</th><th>Name / Record</th><th>Type</th><th>Brief description</th><th class="vdh">View</th></tr></thead><tbody>';
 const mkOf=r=>{const o=[];if(r.pk)o.push('m:'+r.pk);if(r.k&&r.k[0]==='D'&&D[+r.k.slice(1)]){const pid=D[+r.k.slice(1)][0];Object.keys(TF).forEach(k=>{if((TF[k].tg||[]).some(g=>TG[g].ids.includes(pid)))o.push('t:'+k)})}if(r.tf)o.push('t:'+r.tf);return o.join(',')};
 const tr=r=>`<tr data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.y}</td><td class="t">${tbg(r.q)}</td><td class="b">${r.c||'\u2014'}</td><td>${r.d}</td><td>${r.p}</td></tr>`;
 const sortRows=a=>a.sort((p,q)=>(p.n||9999)-(q.n||9999));
@@ -998,11 +1001,11 @@ const coll=m=>{
   const rows=[];
   /* land deeds */
   if(on('deeds'))D.forEach((x,ix)=>{const pm=PMAP[x[0]];if(!(pm&&pm.slice(1).includes(m))||!tfYr(x[1]))return;const named=pm[0]==='n';
-    rows.push({k:'D'+ix,id:sids().D[ix],sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),nm:'',en:tipEsc(x[2]),ti:'Land deed',ds:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),ct:tipEsc(x[2]),ur:'',dt:String(x[1]),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
-  /* Morris places: items of every kind. ii indexes r.items, which is what sids() hashes. */
+    rows.push({k:'D'+ix,id:sids().D[ix],sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),nm:'',en:RECLAB.deeds,ti:'',ds:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),ct:tipEsc(x[2]),ur:'',dt:String(x[1]),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
+  /* Morris places: items of every kind. Indexed over r.items so the id lines up with the source. */
   R.filter(r=>(PMAP['m:'+r.k]||[]).slice(1).includes(m)).forEach(r=>{const keep=new Set(itemsOf(r));r.items.forEach((i,ii)=>{if(!keep.has(i)||!inYr(i))return;
     const q=isRatItem(i)?'rat':isCourt(i)?'court':isMisc(i)?(isBMD(i)?'bmd':'misc'):'deeds',yy=yrsOf(i)[0]||0,named=PMAP['m:'+r.k][0]==='n';
-    rows.push({k:'M'+r.k+':'+ii,id:sids().M[r.k][ii],sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,nm:'',en:'Place '+r.k,ti:'',ds:i,ct:'',ur:'',dt:String(yy||'n.d.'),p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
+    rows.push({k:'M'+r.k+':'+ii,id:sids().M[r.k][ii],sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,nm:'',en:RECLAB[q]||RECLAB.misc,ti:'',ds:i,ct:'',ur:'',dt:String(yy||'n.d.'),p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
   /* tax lists, census, military, court, B/M/D and miscellaneous rows for the old townships that lie in this one */
   const ks=TFKEYS_OF(m),seenT=new Set(),seenR=new Set();
   ks.forEach(k=>{const t=TF[k];
