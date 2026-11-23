@@ -976,7 +976,7 @@ const yLink=u=>u?' <a href="'+u+'" target="_blank" rel="noopener">'+(/library\/b
    place has the same id each time. Identical entries in one list get "-2", "-3" in list order. */
 let SIDS=null;
 function sids(){if(SIDS)return SIDS;
-  const FN=s=>{let h=2166136261,g=5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h^=c;h=Math.imul(h,16777619);g=((g<<5)+g+c)|0}return (h>>>0).toString(16)+(g>>>0).toString(16)};
+  const FN=s=>{let h=2166136261,g=5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h^=c;h=Math.imul(h,16777619);g=((g<<5)+g+c)|0}const x=n=>(n>>>0).toString(16).padStart(8,'0');return x(h)+x(g)};
   const seen=new Map(),id=(src,v)=>{const b=FN(src+'|'+JSON.stringify(v)),n=(seen.get(b)||0)+1;seen.set(b,n);return 's'+b+(n>1?'-'+n:'')};
   return SIDS={D:D.map(x=>id('D',x)),A:RATS.map(x=>id('A',x)),T:TLR.map(x=>id('T',x)),U:UNPLACED.map(x=>id('U',x)),V:UNPLACED_M.map(x=>id('V',x)),
     M:Object.fromEntries(R.map(r=>[r.k,r.items.map(i=>id('M'+r.k,i))]))}}
