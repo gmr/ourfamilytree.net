@@ -17,7 +17,7 @@ just seed                    # load seed/ into the database (safe to re-run)
 just serve                   # site + MCP on :8080
 just ci                      # fmt-check, clippy -D warnings, unit tests
 just smoke                   # MCP end-to-end test (server must run with DEV_LOGIN_EMAIL set)
-just parity                  # By-year rows and map SVG of the running site vs the v114 page
+just parity                  # By-year records of the running site vs seed/records.json
 ```
 
 ## Architecture
@@ -34,8 +34,13 @@ just parity                  # By-year rows and map SVG of the running site vs t
 - `record` holds one row per source entry, keyed by the page's own row id (`legacy_hash`), taken
   from the rendered page (`tools/extract/records.mjs`). The page makes that id in `sids()` from the
   source entry's data (`s…`, plus `-2`, `-3` for identical entries), never from the table text, so
-  a table change cannot change it; `just parity` fails if one does. `text_hash` keeps the old
+  a table change cannot change it. `just parity` fails if a table change alters an id or any
+  field the importer stores (year, type, citation, details, place, markers, sections). Section
+  names come from `data-sec` on each By-year block, not from its heading. `text_hash` keeps the old
   text id (`r…`, PRD §7.1) for v1 exports. Research links to records by UUID.
+- Record entries live only in the datasets (D, RATS, TLR, UNPLACED, UNPLACED_M, R), never in `app.js`.
+  Correcting an entry changes its id, so `import-seed` refuses to remove a record that has
+  assignments: unassign (or move) them first. Research cannot be attached to a removed record.
 - Crates: `oft-domain` (data.js writer, research JSON v1/v2, validation), `oft-db` (sqlx runtime
   queries, migrations in `crates/oft-db/migrations`), `oft-api` (Axum server, CLI, OAuth, MCP).
 - MCP: `rmcp` streamable HTTP at `/mcp`, behind `auth::require_bearer`. The app is its own OAuth 2.1

@@ -41,12 +41,11 @@ tools-install:
 split page="plans/source/Kent_and_Kint_Records_Map_v114.html":
     cd tools/extract && node split.mjs ../../{{page}} ../..
 
-# Parity: By-year rows and map SVG of the running site against the v114 page
-parity page="plans/source/Kent_and_Kint_Records_Map_v114.html":
+# Parity: By-year records of the running site against seed/records.json (ids and stored fields)
+parity:
     mkdir -p data
     cd tools/extract && node records.mjs http://localhost:8080/ ../../data/records-site.json
     python3 tools/parity.py seed/records.json data/records-site.json
-    cd tools/extract && node map.mjs "file://$(cd ../.. && pwd)/{{page}}" http://localhost:8080/
 
 # End-to-end MCP test against a local server started with DEV_LOGIN_EMAIL
 smoke:

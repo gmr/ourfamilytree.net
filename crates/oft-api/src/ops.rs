@@ -3,6 +3,7 @@
 use oft_db::sqlx::{PgConnection, PgPool};
 use oft_domain::research::{Assignment, ImportSet, Research, parse_import};
 use serde_json::{Value, json};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -71,9 +72,34 @@ pub async fn import(
     } else {
         existing.family_groups.iter().map(|g| g.id).collect()
     };
+    // v1 ids are not UUIDs, so each import gives them new UUIDs; the old id (`legacy_id`) shows
+    // that the item was imported before.
+    let (old_profiles, old_groups) = if replace {
+        Default::default()
+    } else {
+        (
+            oft_db::legacy_ids(&mut tx, false).await?,
+            oft_db::legacy_ids(&mut tx, true).await?,
+        )
+    };
+    let mut stored_as: HashMap<Uuid, Uuid> = HashMap::new();
+    let mut saved = known_profiles.clone();
+    let mut seen_legacy = std::collections::HashSet::new();
 
     for ip in &set.profiles {
-        if known_profiles.contains(&ip.profile.id) {
+        // Two profiles with one old id would later resolve to one stored profile, so keep the first.
+        if let Some(l) = &ip.legacy_id
+            && !seen_legacy.insert(l)
+        {
+            rep.unmatched_assignments
+                .push(json!({"profile": l, "problem": "duplicate profile id; skipped"}));
+            continue;
+        }
+        let stored = ip.legacy_id.as_ref().and_then(|l| old_profiles.get(l));
+        if let Some(&s) = stored {
+            stored_as.insert(ip.profile.id, s);
+        }
+        if known_profiles.contains(&ip.profile.id) || stored.is_some() {
             rep.skipped_existing += 1;
             continue;
         }
@@ -83,16 +109,21 @@ pub async fn import(
             continue;
         }
         rep.profiles_added += 1;
+        saved.insert(ip.profile.id);
         if !dry_run {
             oft_db::save_profile(&mut tx, &ip.profile, ip.legacy_id.as_deref(), user).await?;
         }
         for a in &ip.assignments {
             let mut rec = None;
             if let Some(id) = a.record_id {
-                rec = oft_db::record(&mut tx, &id.to_string()).await?;
+                rec = oft_db::record(&mut tx, &id.to_string())
+                    .await?
+                    .filter(|r| r.status == "active");
             }
             if rec.is_none() && !a.legacy_hash.is_empty() {
-                rec = oft_db::record(&mut tx, &a.legacy_hash).await?;
+                rec = oft_db::record(&mut tx, &a.legacy_hash)
+                    .await?
+                    .filter(|r| r.status == "active");
             }
             if rec.is_none() {
                 rec = oft_db::record_by_snapshot(&mut tx, &a.snapshot).await?;
@@ -130,8 +161,21 @@ pub async fn import(
             }
         }
     }
+    let mut seen_legacy = std::collections::HashSet::new();
     for ig in &set.groups {
-        if known_groups.contains(&ig.group.id) {
+        // legacy_id is unique per table, so keep the first group with an old id.
+        if let Some(l) = &ig.legacy_id
+            && !seen_legacy.insert(l)
+        {
+            rep.unmatched_assignments
+                .push(json!({"family_group": l, "problem": "duplicate family group id; skipped"}));
+            continue;
+        }
+        let imported_before = ig
+            .legacy_id
+            .as_ref()
+            .is_some_and(|l| old_groups.contains_key(l));
+        if known_groups.contains(&ig.group.id) || imported_before {
             rep.skipped_existing += 1;
             continue;
         }
@@ -139,6 +183,11 @@ pub async fn import(
         // Members need a name, a relationship and a citation (PRD §4.2); fill what the page allowed empty.
         g.members.retain(|m| !m.name.is_empty());
         for m in &mut g.members {
+            // Link to the stored profile; a profile that is neither stored nor added keeps the name only.
+            m.profile_id = m
+                .profile_id
+                .map(|id| *stored_as.get(&id).unwrap_or(&id))
+                .filter(|id| saved.contains(id));
             if m.relationship.is_empty() {
                 m.relationship = "(not stated)".into();
             }

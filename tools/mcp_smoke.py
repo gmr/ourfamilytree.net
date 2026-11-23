@@ -185,6 +185,22 @@ r, out = call('export_research')
 exported = out['export']
 r, rep = call('import_research', {'data': exported})
 assert rep['dry_run'] and rep['skipped_existing'] >= 1, rep
+# A v1 file (non-UUID ids) imported twice adds its items once; the second run links to them.
+v1 = {'version': 1, 'profiles': [{'id': 'p_smoke_v1', 'fullName': 'Smoke Test V1', 'assignedRecords': [
+          {'recordId': text_id, 'confidence': 'Probable', 'explanation': 'Smoke test.'}]}],
+      'familyGroups': [{'id': 'fg_smoke_v1', 'title': 'Smoke Test V1 group', 'members': [
+          {'profileId': 'p_smoke_v1', 'name': '', 'relationship': 'self', 'confidence': 'Proven', 'citation': 'c'}]}]}
+r, rep = call('import_research', {'data': v1, 'dry_run': False})
+assert rep['profiles_added'] == 1 and rep['family_groups_added'] == 1 and rep['assignments_attached'] == 1, rep
+r, rep = call('import_research', {'data': v1, 'dry_run': False})
+assert rep['profiles_added'] == 0 and rep['family_groups_added'] == 0 and rep['skipped_existing'] == 2, rep
+r, lr = call('list_research')
+v1p = [p for p in lr['profiles'] if p['full_name'] == 'Smoke Test V1']
+v1g = [g for g in lr['family_groups'] if g['title'] == 'Smoke Test V1 group']
+assert len(v1p) == 1 and len(v1g) == 1, lr
+call('delete_family_group', {'id': v1g[0]['id'], 'confirm': True})
+call('delete_profile', {'id': v1p[0]['id'], 'confirm': True})
+
 r, out = call('delete_profile', {'id': pid})
 assert r.get('isError'), 'delete needs confirm'
 r, out = call('delete_profile', {'id': pid, 'confirm': True})
