@@ -24,7 +24,9 @@ const result = await page.evaluate(() => {
     const c = document.getElementById(id);
     if (c && !c.checked) c.click();
   }
-  // Copied from the page (RS.FN and RS.rowInfo) so the ids are the page's own.
+  // `id` is the page's own record id (data-rid, from the source entry). `legacy` is the old id
+  // from the row text (PRD 7.1, v114 layout); the importer only uses it to find records that
+  // were stored under it, and never changes it on a stored record.
   const FN = (s) => {
     let h = 2166136261, g = 5381;
     for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h ^= c; h = Math.imul(h, 16777619); g = ((g << 5) + g + c) | 0; }
@@ -37,7 +39,7 @@ const result = await page.evaluate(() => {
     const parts = (cells.length >= 5 ? cells.slice(0, -1) : cells).map(txt);
     let pl = '';
     if (cells.length >= 5) { const lc = cells[cells.length - 1], f = lc.firstChild; pl = ((f && f.nodeType === 3 ? f.textContent : lc.textContent) || '').replace(/\s+/g, ' ').trim(); }
-    return { id: FN(parts.join('|').toLowerCase()), y: parts[0], t: parts[1] || '', c: parts[2] || '', d: parts.slice(3).join(' '), p: pl, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
+    return { id: tr.dataset.rid, legacy: FN(parts.join('|').toLowerCase()), y: parts[0], t: parts[1] || '', c: parts[2] || '', d: parts.slice(3).join(' '), p: pl, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
   }
   const section = (tr) => {
     const d = tr.closest('details');
@@ -55,6 +57,7 @@ const result = await page.evaluate(() => {
 });
 await browser.close();
 
+for (const r of result.rows) if (!r.id) errors.push(`row without a record id: ${r.y} | ${r.t} | ${r.c}`);
 const byId = new Map();
 for (const r of result.rows) {
   const o = byId.get(r.id);

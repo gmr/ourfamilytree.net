@@ -31,9 +31,11 @@ just parity                  # By-year rows and map SVG of the running site vs t
   server, no admin UI, the MCP App hook `window.__oftResearch`). Re-running `just split` overwrites them.
 - **Key order matters.** `dataset.value` is `json`, not `jsonb`, and serde_json has `preserve_order`;
   the page iterates object keys. Do not change either.
-- `record` holds one row per distinct By-year row, keyed by the page's own row id (`legacy_hash`,
-  PRD §7.1) taken from the rendered page (`tools/extract/records.mjs`). Research links to records by
-  UUID; the browser sees the legacy hash.
+- `record` holds one row per source entry, keyed by the page's own row id (`legacy_hash`), taken
+  from the rendered page (`tools/extract/records.mjs`). The page makes that id in `sids()` from the
+  source entry's data (`s…`, plus `-2`, `-3` for identical entries), never from the table text, so
+  a table change cannot change it; `just parity` fails if one does. `text_hash` keeps the old
+  text id (`r…`, PRD §7.1) for v1 exports. Research links to records by UUID.
 - Crates: `oft-domain` (data.js writer, research JSON v1/v2, validation), `oft-db` (sqlx runtime
   queries, migrations in `crates/oft-db/migrations`), `oft-api` (Axum server, CLI, OAuth, MCP).
 - MCP: `rmcp` streamable HTTP at `/mcp`, behind `auth::require_bearer`. The app is its own OAuth 2.1

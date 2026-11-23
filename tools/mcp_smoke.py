@@ -143,6 +143,24 @@ r, found = call('search_records', {'query': 'jacob caldwell', 'types': ['B/M/D']
 assert found['total'] >= 1, found
 rec = found['records'][0]
 
+# Record ids come from the source entry. An old text id (v1 exports) still finds its record,
+# unless several source entries share it.
+assert rec['legacy_id'].startswith('s'), rec
+seed = json.load(open('seed/records.json'))['records']
+old = {}
+for s in seed:
+    old.setdefault(s['legacy'], []).append(s['id'])
+text_id = next(s['legacy'] for s in seed if s['id'] == rec['legacy_id'])
+assert len(old[text_id]) == 1, 'pick a record whose old text id is unique'
+r, out = call('get_record', {'id': text_id})
+assert out['record']['id'] == rec['id'], out
+shared = next(k for k, v in old.items() if len(v) > 1)
+r, out = call('get_record', {'id': shared})
+assert r.get('isError'), 'an old text id shared by several records must not pick one'
+for sid in old[shared]:
+    r, out = call('get_record', {'id': sid})
+    assert out['record']['legacy_hash'] == sid, out
+
 r, out = call('assign_records', {'records': [{'record_id': rec['id'], 'confidence': 'Probable', 'explanation': ''}],
                                  'new_profile_name': 'Smoke Test Kent'})
 assert r.get('isError'), 'empty explanation must be refused'
