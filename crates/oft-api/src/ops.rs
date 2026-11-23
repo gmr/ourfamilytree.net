@@ -161,7 +161,16 @@ pub async fn import(
             }
         }
     }
+    let mut seen_legacy = std::collections::HashSet::new();
     for ig in &set.groups {
+        // legacy_id is unique per table, so keep the first group with an old id.
+        if let Some(l) = &ig.legacy_id
+            && !seen_legacy.insert(l)
+        {
+            rep.unmatched_assignments
+                .push(json!({"family_group": l, "problem": "duplicate family group id; skipped"}));
+            continue;
+        }
         let imported_before = ig
             .legacy_id
             .as_ref()
