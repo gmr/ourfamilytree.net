@@ -3,6 +3,7 @@
 
 use oft_domain::Confidence;
 use oft_domain::research::{Assignment, FamilyGroup, Member, Profile, Research, Snapshot};
+use oft_domain::research::{SNAPSHOT_C, SNAPSHOT_D, SNAPSHOT_P};
 use serde_json::Value;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::{FromRow, PgConnection, PgPool};
@@ -150,6 +151,21 @@ pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64,
         }
     }
     let hashes: Vec<&str> = rows.iter().map(|r| r.legacy_hash.as_str()).collect();
+    // A changed source entry gets a new id. Research on the old record would then point at a row
+    // the page no longer shows, so refuse until the assignments are moved or removed.
+    let orphans: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT legacy_hash, year_text, citation FROM record r WHERE status='active' AND NOT legacy_hash = ANY($1)
+           AND EXISTS (SELECT 1 FROM assignment a WHERE a.record_id = r.id) ORDER BY legacy_hash",
+    )
+    .bind(&hashes)
+    .fetch_all(&mut *c)
+    .await?;
+    if !orphans.is_empty() {
+        return Err(sqlx::Error::Protocol(format!(
+            "{} assigned record(s) are not in the new records file; unassign them first: {orphans:?}",
+            orphans.len()
+        )));
+    }
     let removed = sqlx::query(
         "UPDATE record SET status='removed', updated_at=now() WHERE status='active' AND NOT legacy_hash = ANY($1)",
     )
@@ -213,7 +229,9 @@ pub async fn search_records(c: &mut PgConnection, f: &RecordFilter) -> Result<(V
     Ok((rows, total))
 }
 
-/// Finds a record by UUID, by the page id, or by an old text id that names only one record.
+/// Finds a record by UUID, by the page id, or by an old text id that names only one record
+/// (an active one is preferred to removed ones). Removed records are returned, so research on
+/// them can still be found and moved; the assignment inserts refuse them.
 pub async fn record(c: &mut PgConnection, id_or_hash: &str) -> Result<Option<Record>> {
     match Uuid::parse_str(id_or_hash) {
         Ok(id) => {
@@ -224,24 +242,34 @@ pub async fn record(c: &mut PgConnection, id_or_hash: &str) -> Result<Option<Rec
         }
         Err(_) => {
             let mut rows: Vec<Record> = sqlx::query_as(&format!(
-                "SELECT {RECORD_COLS} FROM record WHERE legacy_hash=$1 OR text_hash=$1 LIMIT 2"
+                "SELECT {RECORD_COLS} FROM record WHERE legacy_hash=$1 OR text_hash=$1"
             ))
             .bind(id_or_hash)
             .fetch_all(c)
             .await?;
+            if rows.len() > 1 {
+                rows.retain(|r| r.status == "active");
+            }
             Ok(if rows.len() == 1 { rows.pop() } else { None })
         }
     }
 }
 
-/// Fallback for old exports (PRD §11 #9): same year, type and citation text.
+/// Fallback for old exports (PRD §11 #9): the one active record with the same year, type,
+/// citation, details and place text (compared at the lengths an import keeps).
 pub async fn record_by_snapshot(c: &mut PgConnection, s: &Snapshot) -> Result<Option<Record>> {
     let rows: Vec<Record> = sqlx::query_as(&format!(
-        "SELECT {RECORD_COLS} FROM record WHERE year_text=$1 AND type_label=$2 AND citation=$3 LIMIT 2"
+        "SELECT {RECORD_COLS} FROM record WHERE status='active' AND year_text=$1 AND type_label=$2
+           AND left(citation, $6)=$3 AND left(details, $7)=$4 AND left(place, $8)=$5 LIMIT 2"
     ))
     .bind(&s.y)
     .bind(&s.t)
     .bind(&s.c)
+    .bind(&s.d)
+    .bind(&s.p)
+    .bind(SNAPSHOT_C as i32)
+    .bind(SNAPSHOT_D as i32)
+    .bind(SNAPSHOT_P as i32)
     .fetch_all(c)
     .await?;
     Ok(if rows.len() == 1 {
@@ -344,7 +372,7 @@ pub async fn research(c: &mut PgConnection) -> Result<Research> {
     .fetch_all(&mut *c)
     .await?;
     let assigns: Vec<AssignmentRow> = sqlx::query_as(
-        "SELECT a.profile_id, a.record_id, r.legacy_hash, a.confidence, a.explanation, a.snapshot, a.marker_keys
+        "SELECT a.profile_id, a.record_id, r.legacy_hash, a.confidence, a.explanation, a.snapshot, r.marker_keys
          FROM assignment a JOIN record r ON r.id = a.record_id ORDER BY a.created_at",
     )
     .fetch_all(&mut *c)
@@ -445,6 +473,17 @@ pub async fn save_profile(
     Ok(())
 }
 
+/// The old (non-UUID) ids of imported profiles or family groups, with the UUID each became.
+pub async fn legacy_ids(c: &mut PgConnection, groups: bool) -> Result<HashMap<String, Uuid>> {
+    let table = if groups { "family_group" } else { "profile" };
+    let rows: Vec<(String, Uuid)> = sqlx::query_as(&format!(
+        "SELECT legacy_id, id FROM {table} WHERE legacy_id IS NOT NULL"
+    ))
+    .fetch_all(c)
+    .await?;
+    Ok(rows.into_iter().collect())
+}
+
 pub async fn delete_profile(c: &mut PgConnection, id: Uuid) -> Result<u64> {
     Ok(sqlx::query("DELETE FROM profile WHERE id=$1")
         .bind(id)
@@ -462,22 +501,8 @@ pub async fn upsert_assignment(
     explanation: &str,
     user: Option<Uuid>,
 ) -> Result<()> {
-    sqlx::query(
-        "INSERT INTO assignment (profile_id, record_id, confidence, explanation, snapshot, marker_keys, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (profile_id, record_id) DO UPDATE SET confidence=$3, explanation=$4, snapshot=$5,
-           marker_keys=$6, updated_at=now()",
-    )
-    .bind(profile)
-    .bind(rec.id)
-    .bind(conf.as_str())
-    .bind(explanation)
-    .bind(serde_json::to_value(rec.snapshot()).expect("snapshot serializes"))
-    .bind(&rec.marker_keys)
-    .bind(user)
-    .execute(c)
-    .await?;
-    Ok(())
+    let snapshot = serde_json::to_value(rec.snapshot()).expect("snapshot serializes");
+    put_assignment(c, profile, rec.id, conf, explanation, &snapshot, user).await
 }
 
 /// Inserts an assignment with a stored snapshot (used by import, which keeps the file's snapshot).
@@ -487,20 +512,48 @@ pub async fn insert_assignment(
     a: &Assignment,
     user: Option<Uuid>,
 ) -> Result<()> {
-    sqlx::query(
-        "INSERT INTO assignment (profile_id, record_id, confidence, explanation, snapshot, marker_keys, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (profile_id, record_id) DO UPDATE SET confidence=$3, explanation=$4, snapshot=$5, marker_keys=$6, updated_at=now()",
+    let snapshot = serde_json::to_value(&a.snapshot).expect("snapshot serializes");
+    put_assignment(
+        c,
+        profile,
+        a.record_id,
+        a.confidence,
+        &a.explanation,
+        &snapshot,
+        user,
+    )
+    .await
+}
+
+/// Research is never attached to a removed record: the page no longer shows it.
+async fn put_assignment(
+    c: &mut PgConnection,
+    profile: Uuid,
+    record: Uuid,
+    conf: Confidence,
+    explanation: &str,
+    snapshot: &Value,
+    user: Option<Uuid>,
+) -> Result<()> {
+    let n = sqlx::query(
+        "INSERT INTO assignment (profile_id, record_id, confidence, explanation, snapshot, created_by)
+         SELECT $1,$2,$3,$4,$5,$6 WHERE EXISTS (SELECT 1 FROM record WHERE id=$2 AND status='active')
+         ON CONFLICT (profile_id, record_id) DO UPDATE SET confidence=$3, explanation=$4, snapshot=$5, updated_at=now()",
     )
     .bind(profile)
-    .bind(a.record_id)
-    .bind(a.confidence.as_str())
-    .bind(&a.explanation)
-    .bind(serde_json::to_value(&a.snapshot).expect("snapshot serializes"))
-    .bind(&a.marker_keys)
+    .bind(record)
+    .bind(conf.as_str())
+    .bind(explanation)
+    .bind(snapshot)
     .bind(user)
     .execute(c)
-    .await?;
+    .await?
+    .rows_affected();
+    if n == 0 {
+        return Err(sqlx::Error::Protocol(format!(
+            "record {record} was removed from the map"
+        )));
+    }
     Ok(())
 }
 

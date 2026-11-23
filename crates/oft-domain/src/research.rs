@@ -9,6 +9,11 @@ use uuid::Uuid;
 
 use crate::{Confidence, cut};
 
+/// Lengths an import keeps of a snapshot's citation, details and place (characters).
+pub const SNAPSHOT_C: usize = 300;
+pub const SNAPSHOT_D: usize = 400;
+pub const SNAPSHOT_P: usize = 200;
+
 /// What an assignment saw of its record when it was made (PRD §6 `snapshot`).
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct Snapshot {
@@ -354,9 +359,9 @@ pub fn parse_import(v: Value) -> Result<ImportSet, String> {
                     snapshot: Snapshot {
                         y: cut(&a.snapshot.y, 60),
                         t: cut(&a.snapshot.t, 60),
-                        c: cut(&a.snapshot.c, 300),
-                        d: cut(&a.snapshot.d, 400),
-                        p: cut(&a.snapshot.p, 200),
+                        c: cut(&a.snapshot.c, SNAPSHOT_C),
+                        d: cut(&a.snapshot.d, SNAPSHOT_D),
+                        p: cut(&a.snapshot.p, SNAPSHOT_P),
                     },
                 }
             })

@@ -625,6 +625,12 @@ impl Mcp {
                     item.record_id
                 ));
             };
+            if rec.status != "active" {
+                return fail(format!(
+                    "record {:?} was removed from the map; nothing was saved",
+                    item.record_id
+                ));
+            }
             let before = profile
                 .assignments
                 .iter()
