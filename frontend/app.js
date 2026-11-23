@@ -917,7 +917,7 @@ function tfData(k,allYears){const t=TF[k],o={deeds:[],rat:[],cen:[],mil:[],court
   Object.values(o).forEach(a=>a.sort((x,y)=>(x[0]||9999)-(y[0]||9999)));return o}
 /* data: served by /data.js */
 const tbg=q=>`<span class="tbg" style="--tc:var(--c-${(TFT.find(x=>x[0]===q)||TFT[6])[3]})">${TFLAB[q]||'Misc'}</span>`;
-function chronoRows(o){const a=[];TFT.forEach(([q,,on])=>{if(on())(o[q]||[]).forEach(x=>a.push([x[0],q,x[1]]))});a.sort((p,q)=>(p[0]||9999)-(q[0]||9999));return a}
+function chronoRows(o){const a=[];TFT.forEach(([q,,on])=>{if(on())(o[q]||[]).forEach(x=>a.push([x[0],q,x[1],x[2]]))});a.sort((p,q)=>(p[0]||9999)-(q[0]||9999));return a}
 function chronoUL(o){const a=chronoRows(o);return a.length?`<ul class="chrono">${a.map(x=>`<li><span class="cy">${x[0]||'n.d.'}</span>${tbg(x[1])}<span class="ct">${x[2]}</span></li>`).join('')}</ul>`:''}
 const TFT=[['deeds','Land',()=>landOn,'land'],['rat','Tax Ratables/Lists',()=>ratOn,'tax'],['cen','Census',()=>cenOn,'cen'],['mil','Military',()=>milOn,'mil'],['court','Court',()=>courtOn,'court'],['bmd','B/M/D Records',()=>bmdOn,'bmd'],['misc','Miscellaneous',()=>miscOn,'misc']];
 function tfRender(){const out=document.getElementById('tfout');const _s=document.getElementById('tfsel');_s.value=tfCur;if(tfCur&&_s.value!==tfCur&&TF[tfCur]){const og=document.getElementById('tfother');if(og){og.insertAdjacentHTML('beforeend',`<option value="${tfCur}">${TF[tfCur].n}</option>`);_s.value=tfCur}}if(window.sideSync)sideSync();
@@ -985,10 +985,10 @@ function tfGo(k,zoom){tfCur=k||'';
   const CM={Essex:{n:'Essex County',ll:[40.806,-74.290]},Morris:{n:'Morris County',ll:[40.930,-74.345]},Bergen:{n:'Bergen County',ll:[40.955,-74.112]},Sussex:{n:'Sussex County',ll:[41.105,-74.630]},Passaic:{n:'Passaic County',ll:[40.945,-74.215]},Union:{n:'Union County',ll:[40.672,-74.385]},Rockland:{n:'Rockland County, N.Y.',ll:[41.150,-74.020]},Orange:{n:'Orange County, N.Y.',ll:[41.400,-74.310]},Putnam:{n:'Putnam County, N.Y.',ll:[41.430,-73.750]},Westchester:{n:'Westchester County, N.Y.',ll:[41.120,-73.780]},Bronx:{n:'Bronx County, N.Y.',ll:[40.850,-73.860]},'New York':{n:'New York County, N.Y.',ll:[40.780,-73.965]},Kings:{n:'Kings County, N.Y.',ll:[40.650,-73.950]},Queens:{n:'Queens County, N.Y.',ll:[40.710,-73.820]},Richmond:{n:'Richmond County, N.Y.',ll:[40.580,-74.150]},Nassau:{n:'Nassau County, N.Y.',ll:[40.730,-73.590]},Suffolk:{n:'Suffolk County, N.Y.',ll:[40.850,-73.450]}};
   const tfHas=r=>TFK.some(k=>{const t=TF[k];return (t.rat||[]).includes(r[12])||(t.tn&&!r[12]&&t.tn.test(r[4]))});
   function cmData(c){const o={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
-    TLR.forEach(r=>{if(r[13]!==c||tfHas(r)||!tfYr(r[6]))return;(o[r[0]]||o.misc).push([r[6],`<b>${tipEsc(r[5])}</b> ${tipEsc(r[7]+' '+r[8])}${r[4]?' ('+tipEsc(r[4])+')':''}: ${tipEsc(r[2])}${r[9]?'. '+tipEsc(r[9]):''} <span class="im">${tipEsc(r[11])}</span>${r[10]?' <a href="'+r[10]+'" target="_blank" rel="noopener">'+(/library\/books/.test(r[10])?'book':'image')+'</a>':''}`])});
-    if(c==='Essex')RATS.forEach(r=>{if(r[5]==='essexnos'&&(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))o.rat.push([r[1],`<b>${r[1]||'n.d.'}</b> ${tipEsc(r[0])}: ${r[2]}`])});
-    if(c==='Morris'){UNPLACED.forEach(u=>{if(inYr(u))o.deeds.push([yrsOf(u)[0]||0,u])});
-      UNPLACED_M.forEach(u=>{if(!inYr(u))return;const k=UCAT(u);o[k==='court'?'court':k==='misc'?(isBMD(u)?'bmd':'misc'):'deeds'].push([yrsOf(u)[0]||0,u])})}
+    TLR.forEach((r,ix)=>{if(r[13]!==c||tfHas(r)||!tfYr(r[6]))return;(o[r[0]]||o.misc).push([r[6],`<b>${tipEsc(r[5])}</b> ${tipEsc(r[7]+' '+r[8])}${r[4]?' ('+tipEsc(r[4])+')':''}: ${tipEsc(r[2])}${r[9]?'. '+tipEsc(r[9]):''} <span class="im">${tipEsc(r[11])}</span>${r[10]?' <a href="'+r[10]+'" target="_blank" rel="noopener">'+(/library\/books/.test(r[10])?'book':'image')+'</a>':''}`,sids().T[ix]])});
+    if(c==='Essex')RATS.forEach((r,ix)=>{if(r[5]==='essexnos'&&(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))o.rat.push([r[1],`<b>${r[1]||'n.d.'}</b> ${tipEsc(r[0])}: ${r[2]}`,sids().A[ix]])});
+    if(c==='Morris'){UNPLACED.forEach((u,ix)=>{if(inYr(u))o.deeds.push([yrsOf(u)[0]||0,u,sids().U[ix]])});
+      UNPLACED_M.forEach((u,ix)=>{if(!inYr(u))return;const k=UCAT(u);o[k==='court'?'court':k==='misc'?(isBMD(u)?'bmd':'misc'):'deeds'].push([yrsOf(u)[0]||0,u,sids().V[ix]])})}
     Object.values(o).forEach(a=>a.sort((x,y)=>(x[0]||9999)-(y[0]||9999)));return o}
   function cmPop(c){tipHide();const o=cmData(c),on=TFT.filter(x=>x[2]()&&o[x[0]].length),tot=on.reduce((n,x)=>n+o[x[0]].length,0);
     popShow(CM[c].n+': county-only records',`<p><b>${tot} ${tot===1?'record':'records'}</b> that name ${CM[c].n} but no township (or a place this map does not mark), in the years and record types chosen in Filters. They are listed in the bar below the map, not placed on it. AI-assisted transcriptions; check the original. Names are as written; one name may be several men.</p>`+
@@ -1039,13 +1039,22 @@ const TFKEYS_OF=m=>TFK.filter(k=>{const t=TF[k];if(t.ny||t.off)return false;
   if((t.tg||[]).some(g=>TG[g]&&TG[g].ids.some(id=>(PMAP[id]||[]).slice(1).includes(m))))return true;
   if((t.pl||'').split('').some(p=>(PMAP['m:'+p]||[]).slice(1).includes(m)))return true;return false});
 const yLink=u=>u?' <a href="'+u+'" target="_blank" rel="noopener">'+(/library\/books/.test(u)?'book':'image')+'</a>':'';
+/* Record ids. An id comes from the source entry (its list and its data), not from the text a table
+   shows, so a change to a table cannot change the id. A row that shows one entry in more than one
+   place has the same id each time. Identical entries in one list get "-2", "-3" in list order. */
+let SIDS=null;
+function sids(){if(SIDS)return SIDS;
+  const FN=s=>{let h=2166136261,g=5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h^=c;h=Math.imul(h,16777619);g=((g<<5)+g+c)|0}return (h>>>0).toString(16)+(g>>>0).toString(16)};
+  const seen=new Map(),id=(src,v)=>{const b=FN(src+'|'+JSON.stringify(v)),n=(seen.get(b)||0)+1;seen.set(b,n);return 's'+b+(n>1?'-'+n:'')};
+  return SIDS={D:D.map(x=>id('D',x)),A:RATS.map(x=>id('A',x)),T:TLR.map(x=>id('T',x)),U:UNPLACED.map(x=>id('U',x)),V:UNPLACED_M.map(x=>id('V',x)),
+    M:Object.fromEntries(R.map(r=>[r.k,r.items.map(i=>id('M'+r.k,i))]))}}
 function buildYearList(){
   const box=document.getElementById('yrlist'),cbox=document.getElementById('yrcty');if(!box||!cbox)return;
   if(ordMode!=='year'){box.innerHTML='';cbox.innerHTML='';return}
   const on=q=>TFT.find(x=>x[0]===q)[2]();
   const th='<table class="twt"><thead><tr><th>Year</th><th>Type</th><th>Citation / deed</th><th>Parties / details</th><th>Place on the map</th></tr></thead><tbody>';
   const mkOf=r=>{const o=[];if(r.pk)o.push('m:'+r.pk);if(r.k&&r.k[0]==='D'&&D[+r.k.slice(1)]){const pid=D[+r.k.slice(1)][0];Object.keys(TF).forEach(k=>{if((TF[k].tg||[]).some(g=>TG[g].ids.includes(pid)))o.push('t:'+k)})}if(r.tf)o.push('t:'+r.tf);return o.join(',')};
-  const tr=r=>`<tr data-mk="${mkOf(r)}"><td class="y">${r.y}</td><td class="t">${tbg(r.q)}</td><td class="b">${r.c||'—'}</td><td>${r.d}</td><td>${r.p}</td></tr>`;
+  const tr=r=>`<tr data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.y}</td><td class="t">${tbg(r.q)}</td><td class="b">${r.c||'—'}</td><td>${r.d}</td><td>${r.p}</td></tr>`;
   const sortRows=a=>a.sort((p,q)=>(p.n||9999)-(q.n||9999));
   const frag=document.createDocumentFragment();
   const groups=lbMode==='county'?MUN_ORDER.map(cty=>[cty,munIds(cty)]):[[null,munIds()]];
@@ -1058,19 +1067,19 @@ function buildYearList(){
       const rows=[];
       /* land deeds */
       if(on('deeds'))D.forEach((x,ix)=>{const pm=PMAP[x[0]];if(!(pm&&pm.slice(1).includes(m))||!tfYr(x[1]))return;const named=pm[0]==='n';
-        rows.push({k:'D'+ix,sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
+        rows.push({k:'D'+ix,id:sids().D[ix],sh:!named,tw:PL[x[0]][0],n:x[1],y:x[1],q:'deeds',c:tipEsc(x[2]),d:tipEsc(x[3])+(x[4]?' ('+tipEsc(x[4])+' ac)':''),p:tipEsc(PL[x[0]][0])+`<span class="bs">${named?'named place':'township only'}</span>`+(named?'':' <span class="also">could lie in: '+munsOf(x[0]).map(shortN).join(', ')+'</span>')+(named?alsoIn(x[0]):'')})});
       /* Morris places: items of every kind */
-      R.filter(r=>(PMAP['m:'+r.k]||[]).slice(1).includes(m)).forEach(r=>{itemsOf(r).forEach((i,ii)=>{if(!inYr(i))return;
+      R.filter(r=>(PMAP['m:'+r.k]||[]).slice(1).includes(m)).forEach(r=>{const keep=new Set(itemsOf(r));r.items.forEach((i,ii)=>{if(!keep.has(i)||!inYr(i))return;
         const q=isRatItem(i)?'rat':isCourt(i)?'court':isMisc(i)?(isBMD(i)?'bmd':'misc'):'deeds',yy=yrsOf(i)[0]||0,named=PMAP['m:'+r.k][0]==='n';
-        rows.push({k:'M'+r.k+':'+ii,sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
+        rows.push({k:'M'+r.k+':'+ii,id:sids().M[r.k][ii],sh:!named,tw:'',pk:r.k,n:yy,y:yy||'n.d.',q,c:'Place '+r.k,d:i,p:tipEsc(r.t)+`<span class="bs">${named?'named place':'township only'}</span>`+alsoIn('m:'+r.k)})})});
       /* tax lists, census, military, court, B/M/D and miscellaneous rows for the old townships that lie in this one */
       const ks=TFKEYS_OF(m),seenT=new Set(),seenR=new Set();
       ks.forEach(k=>{const t=TF[k];
         RATS.forEach((r,ix)=>{if(!(t.rat||[]).includes(r[5])||seenR.has(ix)||!on('rat'))return;if(!(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))return;seenR.add(ix);
-          rows.push({k:'A'+ix,sh:true,tf:k,tw:t.n,n:r[1],y:(r[1]||'n.d.')+(r[4]?'–'+r[4]:''),q:'rat',c:r[2],d:tipEsc(r[0])+(r[3]?' <span class="im">'+tipEsc(r[3])+'</span>':''),p:tipEsc(t.n)+'<span class="bs">township only</span>'})});
+          rows.push({k:'A'+ix,id:sids().A[ix],sh:true,tf:k,tw:t.n,n:r[1],y:(r[1]||'n.d.')+(r[4]?'–'+r[4]:''),q:'rat',c:r[2],d:tipEsc(r[0])+(r[3]?' <span class="im">'+tipEsc(r[3])+'</span>':''),p:tipEsc(t.n)+'<span class="bs">township only</span>'})});
         TLR.forEach((r,ix)=>{if(seenT.has(ix))return;if(!((t.rat||[]).includes(r[12])||(t.tn&&!r[12]&&t.tn.test(r[4]))))return;
           const q=TFLAB[r[0]]?r[0]:'misc';if(!on(q)||!tfYr(r[6]))return;seenT.add(ix);
-          rows.push({k:'T'+ix,sh:true,tf:k,tw:t.n,n:r[6],y:tipEsc(r[5]||r[6]||'n.d.'),q,c:tipEsc(r[2])+(r[11]?' <span class="im">'+tipEsc(r[11])+'</span>':''),d:tipEsc((r[7]+' '+r[8]).trim())+(r[9]?'. '+tipEsc(r[9]):'')+yLink(r[10]),p:tipEsc(t.n)+'<span class="bs">township only</span>'})})});
+          rows.push({k:'T'+ix,id:sids().T[ix],sh:true,tf:k,tw:t.n,n:r[6],y:tipEsc(r[5]||r[6]||'n.d.'),q,c:tipEsc(r[2])+(r[11]?' <span class="im">'+tipEsc(r[11])+'</span>':''),d:tipEsc((r[7]+' '+r[8]).trim())+(r[9]?'. '+tipEsc(r[9]):'')+yLink(r[10]),p:tipEsc(t.n)+'<span class="bs">township only</span>'})})});
       return rows};
     const plan=shPlan(all,coll);
     /* shared blocks: shown when at least one municipality they could lie in is ticked */
@@ -1095,7 +1104,7 @@ function buildYearList(){
     const o=window.cmData(c),A=new Set(UNPLACED),B=new Set(UNPLACED_M);
     const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
     Object.keys(o).forEach(q=>o[q].forEach(x=>((A.has(x[1])||B.has(x[1]))?none:split)[q].push(x)));
-    const mk=(oo,rows2)=>chronoRows(oo).map(x=>`<tr><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`).join('');
+    const mk=(oo,rows2)=>chronoRows(oo).map(x=>`<tr data-rid="${x[3]}"><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`).join('');
     const a=mk(split),b=mk(none);
     if(a)h+=`<h3 class="sub">${MUN_CTY[c]}: records that name only the county, or no township</h3><table class="twt"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${a}</tbody></table>`;
     if(b)h+=`<h3 class="sub">Land and other records with no township given</h3><p class="zhint" style="margin:0 0 4px">The deed index gives no township for these, or they name no place; they are not all on the map.</p><table class="twt"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${b}</tbody></table>`});
@@ -1165,14 +1174,10 @@ const RS=(()=>{
     const w=$('rswarn');if(w)w.hidden=storeOK}
   const assignedOf=rid=>{const o=[];db.profiles.forEach(p=>p.assignedRecords.forEach(a=>{if(a.recordId===rid)o.push({p,a})}));return o};
   /* ----- record rows ----- */
-  const FN=s=>{let h=2166136261,g=5381;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h^=c;h=Math.imul(h,16777619);g=((g<<5)+g+c)|0}return 'r'+(h>>>0).toString(16)+(g>>>0).toString(16)};
-  function rowInfo(tr){const cells=[...tr.children].filter(c=>c.tagName==='TD');if(!cells.length)return null;
-    const txt=c=>{const k=c.cloneNode(true);k.querySelectorAll('.rsw,.asl').forEach(n=>n.remove());return k.textContent.replace(/\s+/g,' ').trim()};
-    const parts=(cells.length>=5?cells.slice(0,-1):cells).map(txt);
-    let pl='';if(cells.length>=5){const lc=cells[cells.length-1],f=lc.firstChild;pl=((f&&f.nodeType===3?f.textContent:lc.textContent)||'').replace(/\s+/g,' ').trim()}
-    return {id:FN(parts.join('|').toLowerCase()),y:parts[0],t:parts[1]||'',c:parts[2]||'',d:parts.slice(3).join(' '),p:pl,mk:(tr.dataset.mk||'').split(',').filter(Boolean)}}
-  function decorate(){document.querySelectorAll('#p-year tbody tr').forEach(tr=>{tr.querySelectorAll('.rsw,.asl').forEach(n=>n.remove());delete tr.dataset.rid;tr.classList.remove('rs-sel');
-    const info=rowInfo(tr);if(!info)return;tr.dataset.rid=info.id;if(!adm)return;
+  /* each row carries its record id (data-rid, from sids()) */
+  const rowInfo=tr=>tr.dataset.rid?{id:tr.dataset.rid}:null;
+  function decorate(){document.querySelectorAll('#p-year tbody tr').forEach(tr=>{tr.querySelectorAll('.rsw,.asl').forEach(n=>n.remove());tr.classList.remove('rs-sel');
+    const info=rowInfo(tr);if(!info)return;if(!adm)return;
     const w=document.createElement('label');w.className='rsw';w.innerHTML='<input type="checkbox" class="rsel" aria-label="Select this record for assignment">';w.firstChild.checked=sel.has(info.id);tr.children[0].insertBefore(w,tr.children[0].firstChild);
     tr.classList.toggle('rs-sel',sel.has(info.id));
     const as=assignedOf(info.id);if(as.length){const d=document.createElement('div');d.className='asl';d.textContent='Assigned: '+as.map(x=>(x.p.fullName||'(unnamed)')+' ('+x.a.confidence+')').join('; ');tr.children[Math.min(3,tr.children.length-1)].appendChild(d)}})}

@@ -67,7 +67,10 @@ pub async fn replace_datasets(c: &mut PgConnection, sets: &[(String, Value)]) ->
 #[derive(Debug, Clone, FromRow, serde::Serialize)]
 pub struct Record {
     pub id: Uuid,
+    /// The id the page gives the row: a hash of the source entry (`s…`).
     pub legacy_hash: String,
+    /// The old id from the row text (`r…`), kept so v1 research exports find their records.
+    pub text_hash: Option<String>,
     pub year_text: String,
     pub year: Option<i32>,
     pub type_label: String,
@@ -91,9 +94,11 @@ impl Record {
     }
 }
 
-const RECORD_COLS: &str = "id, legacy_hash, year_text, year, type_label, citation, details, place, marker_keys, sections, status";
+const RECORD_COLS: &str = "id, legacy_hash, text_hash, year_text, year, type_label, citation, details, place, marker_keys, sections, status";
 
-/// Inserts new records and refreshes existing ones (matched by legacy hash, so ids never change).
+/// Inserts new records and refreshes existing ones (matched by the page id, so UUIDs never change).
+/// A record stored under its old text id takes the page id of the first row with that text id, so
+/// its UUID and assignments stay; the other rows with that text id become new records.
 /// Records missing from `rows` are marked `removed`, never deleted. Returns (inserted, removed).
 pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64, u64)> {
     let mut inserted = 0;
@@ -108,12 +113,23 @@ pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64,
             r.sections.join(" ")
         ))
         .join(" ");
+        if let Some(text_hash) = &r.text_hash {
+            sqlx::query(
+                "UPDATE record SET legacy_hash=$1 WHERE legacy_hash=$2
+                   AND NOT EXISTS (SELECT 1 FROM record WHERE legacy_hash=$1)",
+            )
+            .bind(&r.legacy_hash)
+            .bind(text_hash)
+            .execute(&mut *c)
+            .await?;
+        }
         let res = sqlx::query(
             "INSERT INTO record (legacy_hash, year_text, year, type_label, citation, details, place,
-                                 marker_keys, sections, search_text, status)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'active')
+                                 marker_keys, sections, search_text, status, text_hash)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'active',$11)
              ON CONFLICT (legacy_hash) DO UPDATE SET year_text=$2, year=$3, type_label=$4, citation=$5,
-               details=$6, place=$7, marker_keys=$8, sections=$9, search_text=$10, status='active', updated_at=now()
+               details=$6, place=$7, marker_keys=$8, sections=$9, search_text=$10, status='active',
+               text_hash=COALESCE(record.text_hash, $11), updated_at=now()
              RETURNING (xmax = 0) AS inserted",
         )
         .bind(&r.legacy_hash)
@@ -126,6 +142,7 @@ pub async fn sync_records(c: &mut PgConnection, rows: &[Record]) -> Result<(u64,
         .bind(&r.marker_keys)
         .bind(&r.sections)
         .bind(&search)
+        .bind(&r.text_hash)
         .fetch_one(&mut *c)
         .await?;
         if sqlx::Row::get::<bool, _>(&res, "inserted") {
@@ -196,7 +213,7 @@ pub async fn search_records(c: &mut PgConnection, f: &RecordFilter) -> Result<(V
     Ok((rows, total))
 }
 
-/// Finds a record by UUID or by the page's legacy hash.
+/// Finds a record by UUID, by the page id, or by an old text id that names only one record.
 pub async fn record(c: &mut PgConnection, id_or_hash: &str) -> Result<Option<Record>> {
     match Uuid::parse_str(id_or_hash) {
         Ok(id) => {
@@ -206,12 +223,13 @@ pub async fn record(c: &mut PgConnection, id_or_hash: &str) -> Result<Option<Rec
                 .await
         }
         Err(_) => {
-            sqlx::query_as(&format!(
-                "SELECT {RECORD_COLS} FROM record WHERE legacy_hash=$1"
+            let mut rows: Vec<Record> = sqlx::query_as(&format!(
+                "SELECT {RECORD_COLS} FROM record WHERE legacy_hash=$1 OR text_hash=$1 LIMIT 2"
             ))
             .bind(id_or_hash)
-            .fetch_optional(c)
-            .await
+            .fetch_all(c)
+            .await?;
+            Ok(if rows.len() == 1 { rows.pop() } else { None })
         }
     }
 }

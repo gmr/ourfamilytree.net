@@ -284,6 +284,7 @@ async fn import_seed(pool: &PgPool, datasets: &PathBuf, records: &PathBuf) -> Re
     #[derive(serde::Deserialize)]
     struct Rec {
         id: String,
+        legacy: Option<String>,
         y: String,
         t: String,
         c: String,
@@ -309,6 +310,7 @@ async fn import_seed(pool: &PgPool, datasets: &PathBuf, records: &PathBuf) -> Re
         .map(|r| oft_db::Record {
             id: uuid::Uuid::nil(),
             legacy_hash: r.id,
+            text_hash: r.legacy,
             year_text: r.y,
             year: r.year.and_then(|y| y.parse().ok()),
             type_label: r.t,
