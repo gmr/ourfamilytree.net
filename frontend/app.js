@@ -975,7 +975,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')popHide()});
 function setOrd(o){ordMode=o;document.querySelectorAll('.ordseg button[data-o]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.o===o));
   document.getElementById('records').classList.toggle('ord-year',o==='year');
   document.getElementById('records').classList.toggle('ord-all',o==='all');
-  buildYearList();buildAllList();
+  buildYearList();buildAllList();buildTypeList();
   const cur=document.querySelector('#records .tp:not([hidden])');if(cur&&cur.id==='p-idx')return;
   showTab(o==='year'?'year':o==='all'?'all':'deeds')}
 document.addEventListener('click',e=>{const b=e.target.closest('.ordseg button');if(b&&b.dataset.o)setOrd(b.dataset.o)});
@@ -1045,7 +1045,8 @@ const trCo=r=>`<tr class="rec co" data-rid="${r.id}"><td class="y">${r.y}</td><t
 let recSort='date';
 const rsTxt=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&[a-z]+;/g,' ').trim().toLowerCase();
 const sortRows=a=>a.sort((p,q)=>{
-  if(recSort==='name'){const x=rsTxt(p.nm||p.en),y=rsTxt(q.nm||q.en);
+  /* Sort on the text the Name / Record column actually shows, so ordering matches the page. */
+  if(recSort==='name'){const x=rsTxt(nameCell(p)),y=rsTxt(nameCell(q));
     if(!x!==!y)return x?-1:1; if(x!==y)return x<y?-1:1}
   else if(recSort==='type'){const x=TFLAB[p.q]||'',y=TFLAB[q.q]||'';if(x!==y)return x<y?-1:1}
   const a1=p.n||0,b1=q.n||0;
@@ -1070,6 +1071,33 @@ const coll=m=>{
       const q=TFLAB[r[0]]?r[0]:'misc';if(!on(q)||!tfYr(r[6]))return;seenT.add(ix);
       rows.push({k:'T'+ix,id:sids().T[ix],sh:true,tf:k,tw:t.n,n:r[6],y:tipEsc(r[5]||r[6]||'n.d.'),q,c:tipEsc(r[2])+(r[11]?' <span class="im">'+tipEsc(r[11])+'</span>':''),d:tipEsc((r[7]+' '+r[8]).trim())+(r[9]?'. '+tipEsc(r[9]):'')+yLink(r[10]),nm:tipEsc((r[7]+' '+r[8]).trim()),en:'',ti:tipEsc(r[2]),ds:tipEsc(r[9]||''),ct:tipEsc(r[11]||''),ur:r[10]||'',dt:tipEsc(r[5]||r[6]||'n.d.'),p:tipEsc(t.n)+'<span class="bs">township only</span>'})})});
   return rows};
+/* County-only and no-township records as structured row objects, split into the two groups:
+   nc names the county but no township, nn names no place at all. Built once here and used by
+   every browsing mode, so Browse by Location, All Records and By record type all list the
+   same records from the same source. x[2] — the record as the importer stores it — is carried
+   through untouched; x[4] holds display-only fields and is absent for the prose entries. */
+function ctyOnlyRows(c){
+  if(!window.cmData)return{nc:[],nn:[]};
+  const o=window.cmData(c),UA=new Set(UNPLACED),UB=new Set(UNPLACED_M);
+  const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
+  Object.keys(o).forEach(q=>o[q].forEach(x=>((UA.has(x[1])||UB.has(x[1]))?none:split)[q].push(x)));
+  const mk=(oo,kind)=>chronoRows(oo).map(x=>{const m=x[4]||{};
+    return{id:x[3],n:x[0]||0,y:x[0]||'n.d.',q:x[1],c:x[2],d:'',p:'',co:kind,cty:MUN_CTY[c],
+           nm:m.nm||'',ti:m.ti||'',en:RECLAB[x[1]]||RECLAB.misc,ds:m.ds||'',ur:m.ur||'',pl:m.pl||''}});
+  return{nc:mk(split,'nc'),nn:mk(none,'nn')};
+}
+/* Every record once, keyed by record id: the located records of the chosen townships plus the
+   county-only records of the chosen counties. This is the single set the record-listing modes
+   share. Nothing is reclassified here — each record keeps the type its own source gives it. */
+function allRecordRows(){
+  const seen=new Set(),out=[];
+  munIds().forEach(m=>{if(!munOn.has(m))return;
+    coll(m).forEach(r=>{if(!r.id||seen.has(r.id))return;seen.add(r.id);out.push(r)})});
+  MUN_ORDER.forEach(c=>{if(!cActive(c))return;const g=ctyOnlyRows(c);
+    g.nc.concat(g.nn).forEach(r=>{if(!r.id||seen.has(r.id))return;seen.add(r.id);out.push(r)})});
+  return out;
+}
+const rowHtml=r=>r.co?trCo(r):tr(r);
 function buildYearList(){
   const box=document.getElementById('yrlist'),cbox=document.getElementById('yrcty');if(!box||!cbox)return;
   if(ordMode!=='year'){box.innerHTML='';cbox.innerHTML='';return}
@@ -1082,16 +1110,8 @@ function buildYearList(){
      (PRD: display only; no record, citation or geographic classification is changed). */
   const ctyOnly=c=>{
     if(!window.cmData)return{html:'',nc:0,nn:0};
-    const o=window.cmData(c),UA=new Set(UNPLACED),UB=new Set(UNPLACED_M);
-    const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
-    Object.keys(o).forEach(q=>o[q].forEach(x=>((UA.has(x[1])||UB.has(x[1]))?none:split)[q].push(x)));
-    /* Built as full row objects so the Compact/Expanded tables, sorting and expansion work
-       exactly as they do for located records. x[2] (the record as stored) is carried through
-       untouched into r.c; x[4] holds display-only fields, absent for the prose entries. */
-    const rws=(oo,kind)=>sortRows(chronoRows(oo).map(x=>{const m=x[4]||{};
-      return{id:x[3],n:x[0]||0,y:x[0]||'n.d.',q:x[1],c:x[2],d:'',p:'',co:kind,cty:MUN_CTY[c],
-             nm:m.nm||'',ti:m.ti||'',en:RECLAB[x[1]]||RECLAB.misc,ds:m.ds||'',ur:m.ur||'',pl:m.pl||''}})).map(trCo);
-    const a=rws(split,'nc'),b=rws(none,'nn');
+    const g=ctyOnlyRows(c);
+    const a=sortRows(g.nc).map(trCo),b=sortRows(g.nn).map(trCo);
     /* data-sec carries the section name the record extractor stores. It is made from the data,
        not from the heading above it, so the headings here can be reworded without moving records. */
     const tbl=(r,sec)=>`<table class="twt rec5" data-sec="${tipEsc(sec)}">${th.slice(th.indexOf('<thead>'))}${r.join('')}</tbody></table>`;
@@ -1163,24 +1183,34 @@ function buildYearList(){
    county-only rows, deduplicated by each record's own source key, so the two views cannot
    drift apart. Columns are unchanged: record identity still comes from them. ---- */
 let allSort='old';
+/* By record type. The same records as All Records, grouped by the type each record already
+   carries; a record is listed once, under its own type. The legacy per-type listings are
+   hidden while this mode is on and restored when it is left — they are not deleted. */
+const TYLEG={deeds:['twpsec'],rat:['ratjump','ratdet'],cen:['cenlist'],mil:['millist','milextra'],court:['courtlist','courttl'],bmd:['bmdlist'],misc:['misclist']};
+function buildTypeList(){
+  const on=ordMode==='type',rows=on?allRecordRows():[];
+  TFT.forEach(([q])=>{
+    const pane=document.getElementById('p-'+q);if(!pane)return;
+    (TYLEG[q]||[]).forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=on});
+    let box=pane.querySelector('.tylist');
+    if(!on){if(box)box.remove();return}
+    if(!box){box=document.createElement('div');box.className='tylist';pane.appendChild(box)}
+    const mine=sortRows(rows.filter(r=>r.q===q));
+    box.innerHTML=mine.length
+      ? `<p class="zhint" style="margin:6px 0"><b>${mine.length} ${mine.length===1?'record':'records'}</b> of this type in the years and record types chosen in Filters, each listed once.</p>`
+        +th+mine.map(rowHtml).join('')+'</tbody></table>'
+      : '<p class="why2">No record of this type in the years and record types chosen in Filters.</p>';
+  });
+  applyView(document.getElementById('records'));
+}
 function buildAllList(){
   const box=document.getElementById('alllist'),cnt=document.getElementById('allcount');
   if(!box)return;
   if(ordMode!=='all'){box.innerHTML='';if(cnt)cnt.textContent='';return}
-  const seen=new Set(),rows=[];
-  munIds().forEach(m=>{if(!munOn.has(m))return;
-    coll(m).forEach(r=>{if(seen.has(r.k))return;seen.add(r.k);rows.push(r)})});
-  /* county-only records: they belong to no township, so they are gathered per county */
-  const extra=[];
-  MUN_ORDER.forEach(c=>{if(!cActive(c)||!window.cmData)return;
-    /* Each county's list already holds its own records once, and a record belongs to one
-       county, so these are taken in order. They are deliberately NOT deduplicated by their
-       text: two separate records can read identically, and collapsing them would repeat the
-       record-id fault rather than count what is there. */
-    chronoRows(window.cmData(c)).forEach(x=>extra.push({n:x[0]||0,y:x[0]||'n.d.',q:x[1],html:x[2],id:x[3]||'',cty:c}))});
-  const all=rows.map(r=>({n:r.n,q:r.q,row:tr(r)}))
-    .concat(extra.map(e=>({n:e.n,q:e.q,
-      row:`<tr${e.id?` data-rid="${e.id}"`:''}><td class="y">${e.y}</td><td class="t">${tbg(e.q)}</td><td colspan="2">${e.html}</td><td>${MUN_CTY[e.cty]}<span class="bs">county only</span></td></tr>`})));
+  /* allRecordRows already holds the county-only records: they are deduplicated by record id,
+     never by their text, since two separate records can read identically and collapsing them
+     would repeat the record-id fault rather than count what is there. */
+  const all=allRecordRows().map(r=>({n:r.n,q:r.q,row:rowHtml(r)}));
   all.sort((p,q)=>{const a=p.n||0,b=q.n||0;
     if(!a!==!b)return a?-1:1;              /* undated always last, both directions */
     return allSort==='new'?b-a:a-b});
@@ -1206,7 +1236,7 @@ function setView(v){viewMode=v;
   applyView()}
 function setRecSort(v){recSort=v;
   document.querySelectorAll('.recsort button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rs===v)));
-  buildYearList();buildAllList();applyView();if(typeof rsRun==='function')rsRun()}
+  buildYearList();buildAllList();buildTypeList();applyView();if(typeof rsRun==='function')rsRun()}
 document.addEventListener('click',e=>{
   const v=e.target.closest('.viewseg button');if(v&&v.dataset.v){setView(v.dataset.v);return}
   const s2=e.target.closest('.recsort button');if(s2&&s2.dataset.rs){setRecSort(s2.dataset.rs);return}
@@ -1216,7 +1246,7 @@ document.addEventListener('click',e=>{
   const open=d.hidden;d.hidden=!open;row.classList.toggle('open',open);
   b.setAttribute('aria-expanded',String(open));b.textContent=open?'Hide':'Details'});
 
-const _allY=all;all=function(){_allY();buildYearList();buildAllList();applyView()};
+const _allY=all;all=function(){_allY();buildYearList();buildAllList();buildTypeList();applyView()};
 setOrd('year');
 all();
 
