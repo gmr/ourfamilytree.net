@@ -854,7 +854,7 @@ function tfData(k,allYears){const t=TF[k],o={deeds:[],rat:[],cen:[],mil:[],court
   Object.values(o).forEach(a=>a.sort((x,y)=>(x[0]||9999)-(y[0]||9999)));return o}
 /* data: served by /data.js */
 const tbg=q=>`<span class="tbg" style="--tc:var(--c-${(TFT.find(x=>x[0]===q)||TFT[6])[3]})">${TFLAB[q]||'Misc'}</span>`;
-function chronoRows(o){const a=[];TFT.forEach(([q,,on])=>{if(on())(o[q]||[]).forEach(x=>a.push([x[0],q,x[1],x[2]]))});a.sort((p,q)=>(p[0]||9999)-(q[0]||9999));return a}
+function chronoRows(o){const a=[];TFT.forEach(([q,,on])=>{if(on())(o[q]||[]).forEach(x=>a.push([x[0],q,x[1],x[2],x[3]]))});a.sort((p,q)=>(p[0]||9999)-(q[0]||9999));return a}
 function chronoUL(o){const a=chronoRows(o);return a.length?`<ul class="chrono">${a.map(x=>`<li><span class="cy">${x[0]||'n.d.'}</span>${tbg(x[1])}<span class="ct">${x[2]}</span></li>`).join('')}</ul>`:''}
 const TFT=[['deeds','Land',()=>landOn,'land'],['rat','Tax Ratables/Lists',()=>ratOn,'tax'],['cen','Census',()=>cenOn,'cen'],['mil','Military',()=>milOn,'mil'],['court','Court',()=>courtOn,'court'],['bmd','B/M/D Records',()=>bmdOn,'bmd'],['misc','Miscellaneous',()=>miscOn,'misc']];
 function tfRender(){const out=document.getElementById('tfout');const _s=document.getElementById('tfsel');_s.value=tfCur;if(tfCur&&_s.value!==tfCur&&TF[tfCur]){const og=document.getElementById('tfother');if(og){og.insertAdjacentHTML('beforeend',`<option value="${tfCur}">${TF[tfCur].n}</option>`);_s.value=tfCur}}if(window.sideSync)sideSync();
@@ -922,10 +922,16 @@ function tfGo(k,zoom){tfCur=k||'';
   const CM={Essex:{n:'Essex County',ll:[40.806,-74.290]},Morris:{n:'Morris County',ll:[40.930,-74.345]},Bergen:{n:'Bergen County',ll:[40.955,-74.112]},Sussex:{n:'Sussex County',ll:[41.105,-74.630]},Passaic:{n:'Passaic County',ll:[40.945,-74.215]},Union:{n:'Union County',ll:[40.672,-74.385]},Rockland:{n:'Rockland County, N.Y.',ll:[41.150,-74.020]},Orange:{n:'Orange County, N.Y.',ll:[41.400,-74.310]},Putnam:{n:'Putnam County, N.Y.',ll:[41.430,-73.750]},Westchester:{n:'Westchester County, N.Y.',ll:[41.120,-73.780]},Bronx:{n:'Bronx County, N.Y.',ll:[40.850,-73.860]},'New York':{n:'New York County, N.Y.',ll:[40.780,-73.965]},Kings:{n:'Kings County, N.Y.',ll:[40.650,-73.950]},Queens:{n:'Queens County, N.Y.',ll:[40.710,-73.820]},Richmond:{n:'Richmond County, N.Y.',ll:[40.580,-74.150]},Nassau:{n:'Nassau County, N.Y.',ll:[40.730,-73.590]},Suffolk:{n:'Suffolk County, N.Y.',ll:[40.850,-73.450]}};
   const tfHas=r=>TFK.some(k=>{const t=TF[k];return (t.rat||[]).includes(r[12])||(t.tn&&!r[12]&&t.tn.test(r[4]))});
   function cmData(c){const o={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
-    TLR.forEach((r,ix)=>{if(r[13]!==c||tfHas(r)||!tfYr(r[6]))return;(o[r[0]]||o.misc).push([r[6],`<b>${tipEsc(r[5])}</b> ${tipEsc(r[7]+' '+r[8])}${r[4]?' ('+tipEsc(r[4])+')':''}: ${tipEsc(r[2])}${r[9]?'. '+tipEsc(r[9]):''} <span class="im">${tipEsc(r[11])}</span>${r[10]?' <a href="'+r[10]+'" target="_blank" rel="noopener">'+(/library\/books/.test(r[10])?'book':'image')+'</a>':''}`,sids().T[ix]])});
-    if(c==='Essex')RATS.forEach((r,ix)=>{if(r[5]==='essexnos'&&(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))o.rat.push([r[1],`<b>${r[1]||'n.d.'}</b> ${tipEsc(r[0])}: ${r[2]}`,sids().A[ix]])});
-    if(c==='Morris'){UNPLACED.forEach((u,ix)=>{if(inYr(u))o.deeds.push([yrsOf(u)[0]||0,u,sids().U[ix]])});
-      UNPLACED_M.forEach((u,ix)=>{if(!inYr(u))return;const k=UCAT(u);o[k==='court'?'court':k==='misc'?(isBMD(u)?'bmd':'misc'):'deeds'].push([yrsOf(u)[0]||0,u,sids().V[ix]])})}
+    /* The 4th element carries display-only fields for the Compact/Expanded tables. The 2nd
+       element stays byte-identical, because that is the text the importer stores. Where a
+       source has no structured name (the unplaced prose entries), nm is left empty and the
+       original entry is shown as written; no name is inferred from it. */
+    TLR.forEach((r,ix)=>{if(r[13]!==c||tfHas(r)||!tfYr(r[6]))return;(o[r[0]]||o.misc).push([r[6],`<b>${tipEsc(r[5])}</b> ${tipEsc(r[7]+' '+r[8])}${r[4]?' ('+tipEsc(r[4])+')':''}: ${tipEsc(r[2])}${r[9]?'. '+tipEsc(r[9]):''} <span class="im">${tipEsc(r[11])}</span>${r[10]?' <a href="'+r[10]+'" target="_blank" rel="noopener">'+(/library\/books/.test(r[10])?'book':'image')+'</a>':''}`,sids().T[ix],
+      {nm:tipEsc((r[7]+' '+r[8]).trim()),ti:tipEsc(r[2]),ds:tipEsc(r[9]||r[2]||''),dt:tipEsc(r[5]||''),ct:tipEsc(r[11]||''),ur:r[10]||'',pl:tipEsc(r[4]||'')}])});
+    if(c==='Essex')RATS.forEach((r,ix)=>{if(r[5]==='essexnos'&&(r[1]===0||(r[1]<=y1&&(r[4]||r[1])>=y0)))o.rat.push([r[1],`<b>${r[1]||'n.d.'}</b> ${tipEsc(r[0])}: ${r[2]}`,sids().A[ix],
+      {nm:tipEsc(r[0]),ti:'',ds:r[2]||'',dt:String(r[1]||'n.d.'),ct:'',ur:'',pl:''}])});
+    if(c==='Morris'){UNPLACED.forEach((u,ix)=>{if(inYr(u))o.deeds.push([yrsOf(u)[0]||0,u,sids().U[ix],{nm:'',ti:'',ds:u,dt:'',ct:'',ur:'',pl:''}])});
+      UNPLACED_M.forEach((u,ix)=>{if(!inYr(u))return;const k=UCAT(u);o[k==='court'?'court':k==='misc'?(isBMD(u)?'bmd':'misc'):'deeds'].push([yrsOf(u)[0]||0,u,sids().V[ix],{nm:'',ti:'',ds:u,dt:'',ct:'',ur:'',pl:''}])})}
     Object.values(o).forEach(a=>a.sort((x,y)=>(x[0]||9999)-(y[0]||9999)));return o}
   function cmPop(c){tipHide();const o=cmData(c),on=TFT.filter(x=>x[2]()&&o[x[0]].length),tot=on.reduce((n,x)=>n+o[x[0]].length,0);
     popShow(CM[c].n+': county-only records',`<p><b>${tot} ${tot===1?'record':'records'}</b> that name ${CM[c].n} but no township (or a place this map does not mark), in the years and record types chosen in Filters. They are listed in the bar below the map, not placed on it. AI-assisted transcriptions; check the original. Names are as written; one name may be several men.</p>`+
@@ -998,8 +1004,8 @@ const coNote=(cc,cn)=>{
   const cty=MUN_CTY[cc],bits=[];
   if(cn.nc)bits.push(`${cn.nc} ${cn.nc===1?'record identifies':'records identify'} ${cty} only and may be relevant to this location`);
   if(cn.nn)bits.push(cn.nc
-    ? `a further ${cn.nn} ${cn.nn===1?'gives':'give'} no township at all, so no location can be read from ${cn.nn===1?'it':'them'}`
-    : `${cn.nn} ${cn.nn===1?'record':'records'} for ${cty} ${cn.nn===1?'gives':'give'} no township at all, so no location can be read from ${cn.nn===1?'it':'them'}`);
+    ? `a further ${cn.nn} ${cn.nn===1?'gives':'give'} no township at all, so a specific township cannot be assigned from that information alone`
+    : `${cn.nn} ${cn.nn===1?'record':'records'} for ${cty} ${cn.nn===1?'gives':'give'} no township at all, so a specific township cannot be assigned from that information alone`);
   return bits.join('; ')+'.'};
 const on=q=>TFT.find(x=>x[0]===q)[2]();
 const th='<table class="twt rec5"><thead><tr><th>Date</th><th>Name / Record</th><th>Type</th><th>Brief description</th><th class="vdh">View</th></tr></thead><tbody>';
@@ -1014,6 +1020,18 @@ const dRow=r=>{const bits=[];
   if(r.ur)bits.push(`<div class="df"><dt>Document</dt><dd><a href="${r.ur}" target="_blank" rel="noopener">${/library\/books/.test(r.ur)?'View the book':'View the image'}</a></dd></div>`);
   return `<tr class="det" hidden><td colspan="5"><dl class="dets">${bits.join('')}</dl></td></tr>`};
 const tr=r=>`<tr class="rec" data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.dt||r.y}</td><td class="nm">${r.nm||r.en||'\u2014'}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||r.d||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRow(r);
+/* County-only and no-township records. Same controls and expansion as every other row.
+   canon-c holds the record exactly as the importer has always stored it, and canon-d and
+   canon-p are present but empty, because these records carry no separate details or place
+   field \u2014 nothing is invented to fill them. The geographic classification is shown, and any
+   place the source itself supplies is repeated under it. */
+const dRowCo=r=>{const bits=[];
+  bits.push(`<div class="df"><dt>Record entry</dt><dd class="canon-c">${r.c||'\u2014'}</dd></div>`);
+  bits.push(`<div class="df"><dt>Geography</dt><dd>${r.co==='nn'?'No township given. A specific township cannot be assigned from this record alone.':'Names '+r.cty+' only, with no township. It may relate to any location within the county.'}${r.pl?' Place as written: '+r.pl+'.':''}</dd></div>`);
+  if(r.ur)bits.push(`<div class="df"><dt>Document</dt><dd><a href="${r.ur}" target="_blank" rel="noopener">${/library\/books/.test(r.ur)?'View the book':'View the image'}</a></dd></div>`);
+  bits.push(`<dd class="canon-d" hidden></dd><dd class="canon-p" hidden></dd>`);
+  return `<tr class="det" hidden><td colspan="5"><dl class="dets">${bits.join('')}</dl></td></tr>`};
+const trCo=r=>`<tr class="rec co" data-rid="${r.id}"><td class="y">${r.y}</td><td class="nm">${r.nm||r.en||'\u2014'}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRowCo(r);
 let recSort='date';
 const rsTxt=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&[a-z]+;/g,' ').trim().toLowerCase();
 const sortRows=a=>a.sort((p,q)=>{
@@ -1057,11 +1075,16 @@ function buildYearList(){
     const o=window.cmData(c),UA=new Set(UNPLACED),UB=new Set(UNPLACED_M);
     const split={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]},none={deeds:[],rat:[],cen:[],mil:[],court:[],bmd:[],misc:[]};
     Object.keys(o).forEach(q=>o[q].forEach(x=>((UA.has(x[1])||UB.has(x[1]))?none:split)[q].push(x)));
-    const rws=oo=>chronoRows(oo).map(x=>`<tr data-rid="${x[3]}"><td class="y">${x[0]||'n.d.'}</td><td class="t">${tbg(x[1])}</td><td colspan="3">${x[2]}</td></tr>`);
-    const a=rws(split),b=rws(none);
+    /* Built as full row objects so the Compact/Expanded tables, sorting and expansion work
+       exactly as they do for located records. x[2] (the record as stored) is carried through
+       untouched into r.c; x[4] holds display-only fields, absent for the prose entries. */
+    const rws=(oo,kind)=>sortRows(chronoRows(oo).map(x=>{const m=x[4]||{};
+      return{id:x[3],n:x[0]||0,y:x[0]||'n.d.',q:x[1],c:x[2],d:'',p:'',co:kind,cty:MUN_CTY[c],
+             nm:m.nm||'',en:RECLAB[x[1]]||RECLAB.misc,ds:m.ds||'',ur:m.ur||'',pl:m.pl||''}})).map(trCo);
+    const a=rws(split,'nc'),b=rws(none,'nn');
     /* data-sec carries the section name the record extractor stores. It is made from the data,
        not from the heading above it, so the headings here can be reworded without moving records. */
-    const tbl=(r,sec)=>`<table class="twt" data-sec="${tipEsc(sec)}"><thead><tr><th>Year</th><th>Type</th><th colspan="3">Record</th></tr></thead><tbody>${r.join('')}</tbody></table>`;
+    const tbl=(r,sec)=>`<table class="twt rec5" data-sec="${tipEsc(sec)}">${th.slice(th.indexOf('<thead>'))}${r.join('')}</tbody></table>`;
     const SEC_CO=MUN_CTY[c]+': records that name only the county, or no township',SEC_NP='Land and other records with no township given';
     let html='';
     if(a.length)html+=`<details class="ctyblk" id="co-${c}"><summary><span>${MUN_CTY[c]}: records that name only the county, or no township</span><span class="tc">${a.length} ${a.length===1?'record':'records'}</span></summary>`

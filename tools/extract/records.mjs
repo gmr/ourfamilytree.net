@@ -55,9 +55,11 @@ const result = await page.evaluate(() => {
     const place = () => { const e = det.querySelector('.canon-p'); if (!e) return pl; const f = e.firstChild; return ((f && f.nodeType === 3 ? f.textContent : e.textContent) || '').replace(/\s+/g, ' ').trim(); };
     const y = cell('td.y', parts[0]), t = cell('td.t', parts[1] || '');
     const c = canon('.canon-c'), d = canon('.canon-d'), p = place();
-    // legacy keeps the v114 row-text id: that layout's first four columns were year, type,
-    // citation and details, so it is rebuilt from the canonical values, not from the new cells.
-    return { id: tr.dataset.rid, legacy: FN([y, t, c, d].join('|').toLowerCase()), y, t, c, d, p, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
+    // legacy keeps the v114 row-text id, rebuilt from the canonical values rather than the new
+    // cells. County-only rows (tr.co) had three content columns in that layout, not four, so
+    // their hash is built from three; everything else keeps year, type, citation and details.
+    const parts114 = tr.classList.contains('co') ? [y, t, c] : [y, t, c, d];
+    return { id: tr.dataset.rid, legacy: FN(parts114.join('|').toLowerCase()), y, t, c, d, p, mk: (tr.dataset.mk || '').split(',').filter(Boolean) };
   }
   const section = (tr) => {
     // The page writes the section name in data-sec, from the data, so a heading change cannot change it.
