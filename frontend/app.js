@@ -991,6 +991,16 @@ function sids(){if(SIDS)return SIDS;
   const seen=new Map(),id=(src,v)=>{const b=FN(src+'|'+JSON.stringify(v)),n=(seen.get(b)||0)+1;seen.set(b,n);return 's'+b+(n>1?'-'+n:'')};
   return SIDS={D:D.map(x=>id('D',x)),A:RATS.map(x=>id('A',x)),T:TLR.map(x=>id('T',x)),U:UNPLACED.map(x=>id('U',x)),V:UNPLACED_M.map(x=>id('V',x)),
     M:Object.fromEntries(R.map(r=>[r.k,r.items.map(i=>id('M'+r.k,i))]))}}
+/* The county-only notice. Both counts are always stated: nc records name the county but no
+   township, nn name no place at all. Neither can be placed in a township, so both keep their
+   geographic uncertainty — nc "may be relevant to this location", nn cannot be located at all. */
+const coNote=(cc,cn)=>{
+  const cty=MUN_CTY[cc],bits=[];
+  if(cn.nc)bits.push(`${cn.nc} ${cn.nc===1?'record identifies':'records identify'} ${cty} only and may be relevant to this location`);
+  if(cn.nn)bits.push(cn.nc
+    ? `a further ${cn.nn} ${cn.nn===1?'gives':'give'} no township at all, so no location can be read from ${cn.nn===1?'it':'them'}`
+    : `${cn.nn} ${cn.nn===1?'record':'records'} for ${cty} ${cn.nn===1?'gives':'give'} no township at all, so no location can be read from ${cn.nn===1?'it':'them'}`);
+  return bits.join('; ')+'.'};
 const on=q=>TFT.find(x=>x[0]===q)[2]();
 const th='<table class="twt rec5"><thead><tr><th>Date</th><th>Name / Record</th><th>Type</th><th>Brief description</th><th class="vdh">View</th></tr></thead><tbody>';
 const mkOf=r=>{const o=[];if(r.pk)o.push('m:'+r.pk);if(r.k&&r.k[0]==='D'&&D[+r.k.slice(1)]){const pid=D[+r.k.slice(1)][0];Object.keys(TF).forEach(k=>{if((TF[k].tg||[]).some(g=>TG[g].ids.includes(pid)))o.push('t:'+k)})}if(r.tf)o.push('t:'+r.tf);return o.join(',')};
@@ -1094,7 +1104,7 @@ function buildYearList(){
       det.innerHTML=`<summary><span>${mu.n}${cty?'':'<span class="cty"> · '+MUN_CTY[mu.c]+'</span>'}</span><span class="tc">${rows.length} located here${nsh?' · '+nsh+' shared':''}</span></summary>
         <div class="twb"><p class="twh"><b>History.</b> ${mu.h}</p><p class="twsrc">Sources: ${src}</p>
         ${rows.length?th+rows.map(tr).join('')+'</tbody></table>':(nsh?'':'<p class="why2">No record in the years and record types chosen in Filters.</p>')}${shRef(bs)}
-        ${con?`<p class="conote">${cn.nc?`Additional records identify ${MUN_CTY[cc]} only and may be relevant to this location.`:''}${cn.nn?`${cn.nc?' A further '+cn.nn+' give no township at all, so no location can be read from them.':`${cn.nn} records for ${MUN_CTY[cc]} give no township at all, so no location can be read from them.`}`:''} <a href="#cosec-${cc}" data-co="${cc}">See all ${con} ${con===1?'record':'records'}</a> &mdash; none is included in the count above.</p>`:''}</div>`;
+        ${con?`<p class="conote">${coNote(cc,cn)} <a href="#cosec-${cc}" data-co="${cc}">${con===1?'See the 1 record':'See all '+con+' records'}</a> &mdash; none is included in the count above.</p>`:''}</div>`;
       cfrag.appendChild(det)});
     /* Section C: records that name a historical jurisdiction only. */
     if(cBlocks.length){cfrag.appendChild(sect('Records naming historical jurisdictions only',String(cBlocks.length)+(cBlocks.length===1?' block':' blocks')));
