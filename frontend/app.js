@@ -988,6 +988,16 @@ const yLink=u=>u?' <a href="'+u+'" target="_blank" rel="noopener">'+(/library\/b
 /* A record with no name field shows a neutral label for its kind, never an identifier.
    Deed books and FamilySearch arks stay in Citation and Details. */
 const RECLAB={deeds:'Land deed',rat:'Tax entry',cen:'Census entry',mil:'Military record',court:'Court record',bmd:'B/M/D record',misc:'Record'};
+/* The Name / Record column. A name as recorded where the source gives one; otherwise the
+   record's own title, and otherwise the opening of the entry itself. Nothing is inferred:
+   a preview is the source's own words, cut at a word break. The full text always remains
+   in the expanded row, so the preview never stands in for the record. The type label is a
+   last resort, for an entry that has no name, no title and no text to preview. */
+const stripTags=h=>String(h||'').replace(/<[^>]*>/g,' ').replace(/&[a-z]+;/g,' ').replace(/\s+/g,' ').trim();
+const preview=(h,n)=>{const t=stripTags(h);if(!t)return '';if(t.length<=n)return t;
+  const cut=t.slice(0,n),sp=cut.lastIndexOf(' ');
+  return (sp>n*0.55?cut.slice(0,sp):cut).replace(/[,;:.\-\s]+$/,'')+'…'};
+const nameCell=r=>r.nm||r.ti||preview(r.ds||r.d,64)||r.en||'—';
 /* Record ids. An id comes from the source entry (its list and its data), not from the text a table
    shows, so a change to a table cannot change the id. A row that shows one entry in more than one
    place has the same id each time. Identical entries in one list get "-2", "-3" in list order. */
@@ -1019,7 +1029,7 @@ const dRow=r=>{const bits=[];
   bits.push(`<div class="df"><dt>Place</dt><dd class="canon-p">${r.p||'\u2014'}</dd></div>`);
   if(r.ur)bits.push(`<div class="df"><dt>Document</dt><dd><a href="${r.ur}" target="_blank" rel="noopener">${/library\/books/.test(r.ur)?'View the book':'View the image'}</a></dd></div>`);
   return `<tr class="det" hidden><td colspan="5"><dl class="dets">${bits.join('')}</dl></td></tr>`};
-const tr=r=>`<tr class="rec" data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.dt||r.y}</td><td class="nm">${r.nm||r.en||'\u2014'}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||r.d||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRow(r);
+const tr=r=>`<tr class="rec" data-rid="${r.id}" data-mk="${mkOf(r)}"><td class="y">${r.dt||r.y}</td><td class="nm">${nameCell(r)}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||r.d||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRow(r);
 /* County-only and no-township records. Same controls and expansion as every other row.
    canon-c holds the record exactly as the importer has always stored it, and canon-d and
    canon-p are present but empty, because these records carry no separate details or place
@@ -1031,7 +1041,7 @@ const dRowCo=r=>{const bits=[];
   if(r.ur)bits.push(`<div class="df"><dt>Document</dt><dd><a href="${r.ur}" target="_blank" rel="noopener">${/library\/books/.test(r.ur)?'View the book':'View the image'}</a></dd></div>`);
   bits.push(`<dd class="canon-d" hidden></dd><dd class="canon-p" hidden></dd>`);
   return `<tr class="det" hidden><td colspan="5"><dl class="dets">${bits.join('')}</dl></td></tr>`};
-const trCo=r=>`<tr class="rec co" data-rid="${r.id}"><td class="y">${r.y}</td><td class="nm">${r.nm||r.en||'\u2014'}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRowCo(r);
+const trCo=r=>`<tr class="rec co" data-rid="${r.id}"><td class="y">${r.y}</td><td class="nm">${nameCell(r)}</td><td class="t">${tbg(r.q)}</td><td class="bd">${r.ds||'\u2014'}</td><td class="vd"><button type="button" class="vdb" aria-expanded="false">Details</button></td></tr>`+dRowCo(r);
 let recSort='date';
 const rsTxt=h=>String(h||'').replace(/<[^>]*>/g,'').replace(/&[a-z]+;/g,' ').trim().toLowerCase();
 const sortRows=a=>a.sort((p,q)=>{
@@ -1080,7 +1090,7 @@ function buildYearList(){
        untouched into r.c; x[4] holds display-only fields, absent for the prose entries. */
     const rws=(oo,kind)=>sortRows(chronoRows(oo).map(x=>{const m=x[4]||{};
       return{id:x[3],n:x[0]||0,y:x[0]||'n.d.',q:x[1],c:x[2],d:'',p:'',co:kind,cty:MUN_CTY[c],
-             nm:m.nm||'',en:RECLAB[x[1]]||RECLAB.misc,ds:m.ds||'',ur:m.ur||'',pl:m.pl||''}})).map(trCo);
+             nm:m.nm||'',ti:m.ti||'',en:RECLAB[x[1]]||RECLAB.misc,ds:m.ds||'',ur:m.ur||'',pl:m.pl||''}})).map(trCo);
     const a=rws(split,'nc'),b=rws(none,'nn');
     /* data-sec carries the section name the record extractor stores. It is made from the data,
        not from the heading above it, so the headings here can be reworded without moving records. */
