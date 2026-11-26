@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Kent and Kint Records Map</title>
+<title>Known Kent/Kint/Kindt Records</title>
 <script>try{var t=localStorage.getItem("oft-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
@@ -439,6 +439,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-sans)}
 body a{color:var(--link)}body a:hover{color:var(--link-hover)}
 body .wrap{max-width:1360px;padding:0 32px 48px;box-sizing:border-box;gap:20px}
 body .ofhead{padding:28px 0 0}
+body .ofhead .subttl{font:600 1rem/1.35 var(--f-body);color:var(--sub-ink);margin:2px 0 0}
 body .ofhead .eyebrow{font:600 12px/1.3 var(--f-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--sub-ink);margin:0}
 body .ofhead h1{margin:4px 0 0;font:700 34px/1.15 var(--f-head);color:var(--ink);letter-spacing:0}
 body .ofhead .lede{margin:6px 0 0;font-size:15px;line-height:1.5;color:var(--sub-ink);max-width:720px}
@@ -493,6 +494,9 @@ body aside#filters .lb-cols{max-height:320px;overflow:auto}
 body #mapsec{border-radius:12px;padding:0;border:0;background:none;display:flex;flex-direction:column;gap:12px}
 body .mapbox{border:1px solid var(--rule);border-radius:12px;background:var(--paper);overflow:hidden}
 body #map{display:block}
+body .zbar .zshot{display:inline-flex;align-items:center;gap:6px;padding:0 12px;max-width:100%;font:600 13px var(--f-body);white-space:nowrap}
+body .zbar .zshot svg{flex:none;width:15px;height:15px;min-width:0}
+@media (max-width:640px){body .zbar .zshot{padding:0 10px}body .zbar .zshot span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
 body .zbar{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;max-width:100%;margin:0 0 10px;padding:6px 8px;background:var(--panel-alt);border:1px solid var(--rule);border-radius:10px;box-shadow:none}
 body .zbar #zreset,body .zbar #zwide{margin-left:auto}
 @media (max-width:640px){body .zbar{flex-direction:row;flex-wrap:wrap;gap:4px;padding:5px 6px;justify-content:flex-start}body .zbar #zreset,body .zbar #zwide{margin-left:0}body .zbar button{min-width:34px;height:32px}}
@@ -557,8 +561,9 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
 
 <div class="wrap">
 <header class="ofhead"><div>
-  <div class="eyebrow">Kent family research / Historical records</div>
-  <h1>Kent and Kint Records Map</h1>
+  <div class="eyebrow">Working file</div>
+  <h1>Known Kent/Kint/Kindt Records</h1>
+  <p class="subttl">Northern New Jersey to New York City</p>
   <p class="lede">Land, tax, census, military, court and vital records for the Kent, Kint and Kindt families of the Northern New Jersey and Southern New York corridor, 1720 to 1890.</p>
 </div>
   <div class="thm" id="thm" role="group" aria-label="Colour theme"><button type="button" data-t="">System</button><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></div>
@@ -569,7 +574,10 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
       <li><b>Choose what to see.</b> In Filters, pick counties or townships and tick the kinds of record. The map and every list follow that choice.</li>
       <li><b>Read the markers.</b> Numbered circle = a township as the records name it; the number is how many records name it; its pop-up window lists them in order of year, each with a coloured badge for its kind of record (Land, Tax, Census, Military, Court, B/M/D, Misc). Numbered squares in the bar directly below the map = records that name only the county (they are not placed on the map). Letter = one particular place in Morris County. ◇ = the Swine Field court case. Hover over a marker for a summary; click it for a pop-up window listing its records.</li>
       <li><b>Look at one township.</b> Click a township name on the map, or pick one from the "Jump to place" list in Filters, under Years (◀ and ▶ step to the previous or next place). The map zooms to it straight away and its records open in a panel beside the map. You can also pick a whole county from the same list. Choose "Currently Entire Map" (or press "× Entire map" on the panel) to close the panel and return to the full-width map.</li>
-      <li><b>Find a record.</b> Under the map, each township lists all its records in order of year. A coloured badge in the Type column shows the kind: land, tax ratables and lists, census, military, court, birth, marriage and death, or miscellaneous. Tick or untick the kinds in &quot;Record types&quot; (in Filters), and use &quot;Order records&quot; to switch between &quot;By year&quot; and the older &quot;By record type&quot; tabs. The Index of individuals (see the links at the top of the page) opens with resolved individuals and family groups, then lists every name with the records that name it.</li>
+      <li><b>Find a record.</b> Under the map, <b>Browse records</b> offers three ways through the same records: <b>Browse by Location</b> groups them by county and township, <b>All Records</b> is one list of every record, and <b>By Record Type</b> groups them as land, tax, census, military, court, birth, marriage and death, or miscellaneous. A coloured badge in the Type column shows the kind in every view. Tick or untick the kinds in &quot;Record types&quot; (in Filters). The Index of individuals (see the links at the top of the page) opens with resolved individuals and family groups, then lists every name with the records that name it.</li>
+      <li><b>Read more or less of each record.</b> <b>Compact</b> shows the date, name or record, type and a brief description; <b>Expanded</b> opens every record's full entry, with its citation, details, place and a link to the document where one exists. <b>Details</b> on any single row opens just that record. <b>Sort by</b> orders the list by <b>Date</b>, <b>Name</b> or <b>Type</b>; undated records come last whichever you choose.</li>
+      <li><b>Search.</b> The search box above the records matches names, dates, kinds of record, places and sources, and hides everything that does not match. Headings disappear with their records, so what remains is only what matched.</li>
+      <li><b>County-only records.</b> Some records name a county but no township, and some name no place at all. They cannot be placed on the map or counted under any township, so each county lists them separately, at the top of its section, collapsed until you open them. A township's notice says how many there are and links to them.</li>
       <li><b>Terms.</b> &quot;Township only&quot; = the record names an old township, not a lot, so no exact spot is shown. &quot;n.d.&quot; = no date recorded. &quot;Deed workbook&quot; = the compiler’s deed research workbook; a dash in a book-and-page column = book and page were not recorded. † = acreage taken from the compiler’s research notes, not read from the deed.</li>
     </ul>
   </details>
@@ -628,7 +636,7 @@ body .twt td.b,body .twt th:nth-child(3){white-space:normal;overflow-wrap:anywhe
 <div class="mainc">
 <div class="grid">
   <section class="sheet" id="mapsec" aria-label="Map">
-    <div class="zbar" role="group" aria-label="Map controls"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button></div>
+    <div class="zbar" role="group" aria-label="Map controls"><button id="zout" aria-label="Zoom out">−</button><output id="zlvl">100%</output><button id="zin" aria-label="Zoom in">+</button><button id="pl" aria-label="Move left">◀</button><button id="pu" aria-label="Move up">▲</button><button id="pd" aria-label="Move down">▼</button><button id="pr" aria-label="Move right">▶</button><button id="zreset">Reset</button><button id="zwide" aria-pressed="false">Full width</button><button id="zshot" class="zshot" title="Save a PNG picture of the map exactly as it is shown now, at the current zoom and position" aria-label="Screenshot: save a picture of the current map view"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5h3.2l1.4-2.2h8.8l1.4 2.2H21v10H3z"/><circle cx="12" cy="13" r="3.4"/></svg><span>Screenshot</span></button></div>
     <div class="mapbox">
     <div id="zmsg" aria-hidden="true">Hold Ctrl (or ⌘) and scroll to zoom the map</div><svg id="map" role="img" aria-label="Map of Kent and Kint records in northern New Jersey"></svg>
     </div>

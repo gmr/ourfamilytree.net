@@ -1223,6 +1223,58 @@ document.addEventListener('click',e=>{const b=e.target.closest('#allbar .sortseg
   allSort=b.dataset.s;document.querySelectorAll('#allbar .sortseg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.s===allSort));
   buildAllList()});
 
+/* ---- Screenshot: a PNG of the map exactly as it is on screen ----------------------- */
+/* The map is an inline SVG that takes its colours and sizes from the page's stylesheet, so a
+   serialized copy on its own would come out unstyled. The clone is walked alongside the
+   original and the computed value of the properties the map actually uses is written onto
+   each node, which also preserves what is hidden at the current zoom. The viewBox, the
+   coordinates and the data are untouched: this only photographs what is already drawn. */
+const SHOT_PROPS=['fill','fill-opacity','stroke','stroke-width','stroke-opacity','stroke-dasharray','stroke-linecap','stroke-linejoin','opacity','display','visibility','font-family','font-size','font-weight','font-style','text-anchor','dominant-baseline','letter-spacing','paint-order'];
+function mapShot(){
+  const svg=document.getElementById('map');if(!svg)return;
+  const btn=document.getElementById('zshot'),was=btn?btn.querySelector('span').textContent:'';
+  const say=t=>{if(btn&&btn.querySelector('span'))btn.querySelector('span').textContent=t};
+  try{
+    const clone=svg.cloneNode(true);
+    const src=[svg,...svg.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];
+    for(let i=0;i<src.length;i++){
+      const cs=getComputedStyle(src[i]);let out='';
+      SHOT_PROPS.forEach(k=>{const v=cs.getPropertyValue(k);if(v&&v!=='none'||k==='display'&&v==='none')out+=k+':'+v+';'});
+      dst[i].setAttribute('style',out);
+    }
+    const r=svg.getBoundingClientRect(),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    clone.setAttribute('width',w);clone.setAttribute('height',h);
+    /* a solid backdrop, so the picture is not transparent where the paper shows through */
+    const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    const vb=(svg.getAttribute('viewBox')||'0 0 1000 773').split(/[\s,]+/).map(Number);
+    bg.setAttribute('x',vb[0]);bg.setAttribute('y',vb[1]);bg.setAttribute('width',vb[2]);bg.setAttribute('height',vb[3]);
+    bg.setAttribute('fill',getComputedStyle(document.body).getPropertyValue('--paper').trim()||'#fff');
+    clone.insertBefore(bg,clone.firstChild);
+    const xml=new XMLSerializer().serializeToString(clone);
+    const url=URL.createObjectURL(new Blob([xml],{type:'image/svg+xml;charset=utf-8'}));
+    const img=new Image();
+    img.onload=()=>{
+      const sc=Math.min(2,window.devicePixelRatio||1);
+      const cv=document.createElement('canvas');cv.width=w*sc;cv.height=h*sc;
+      const cx=cv.getContext('2d');cx.scale(sc,sc);cx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b=>{
+        if(!b){say('Could not save');setTimeout(()=>say(was),2500);return}
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(b);
+        a.download='kent-records-map-'+new Date().toISOString().slice(0,10)+'.png';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+        say('Saved');setTimeout(()=>say(was),2000);
+      },'image/png');
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);say('Could not save');setTimeout(()=>say(was),2500)};
+    img.src=url;
+  }catch(e){say('Could not save');setTimeout(()=>say(was),2500)}
+}
+document.addEventListener('click',e=>{if(e.target.closest('#zshot')){e.preventDefault();mapShot()}});
+
 /* ---- Compact / Expanded, and per-record expansion ---------------------------------- */
 let viewMode='compact';
 function applyView(root){(root||document).querySelectorAll('tr.rec').forEach(r=>{
@@ -1253,7 +1305,7 @@ all();
 /* ---- Records keyword search: hides rows that do not contain the words typed (display only) ---- */
 (function(){const q=document.getElementById('rsq'),x=document.getElementById('rsx'),n=document.getElementById('rsn'),box=document.getElementById('rsrch');if(!q)return;
   const panels=()=>[...document.querySelectorAll('#records .tp')].filter(p=>p.id!=='p-idx');
-  function place(){/* keep the box in the bar that is showing: beside "Order records" in either mode */
+  function place(){/* keep the box in the bar that is showing: beside "Browse records" in either mode */
     const yr=document.querySelector('#p-year .yrbar'),top=document.getElementById('ordtop');const tgt=ordMode==='year'?yr:top;if(tgt&&box.parentNode!==tgt)tgt.insertBefore(box,tgt.firstChild)}
   let busy=false;
   function run(){if(busy)return;busy=true;try{place();
